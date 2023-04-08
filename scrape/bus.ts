@@ -2,7 +2,9 @@ import axios from 'axios';
 import chalk from 'chalk'
 import { BusRoute, BusStop, Route, Stop } from '../typescript/interfaces';
 import { TransportType } from '../typescript/types';
-import busesResponse from '../dev/JSON_BUS.json'
+// For Dev purpose only
+import busesResponse from '../dev/JSON_BUS.json';
+// import { routes as nlbRoutes } from '../dev/nlb-route.json'
 
 const createStop = <T>(item: any): T => {
     let { stopNameC: nameTC, stopNameE: nameEN, stopId: id, stopSeq: seq } = item.properties;
@@ -61,6 +63,7 @@ const createRoute = <T>(item: any, type: TransportType): T => {
 }
 
 const fetchBuses = async() => {
+    console.log(chalk.blue(`[scrape] Start fetching buses`))
     const checkParenthesis = /\(.*$/; // Remove parenthesis due to different naming
     try {
         // const busesResponse = await axios('https://static.data.gov.hk/td/routes-fares-geojson/JSON_BUS.json'); //Get all buses information from data.gov.hk
@@ -81,6 +84,7 @@ const fetchBuses = async() => {
         }, []); //Initial value for reduce
         // Get service modes from kmb
         try {
+            console.info(chalk.blue(`[scraper] Now implementing KMB routes`))
             const kmbResponse = await axios('https://data.etabus.gov.hk/v1/transport/kmb/route/');
             const {data: kmbJson} = kmbResponse;
             
@@ -98,23 +102,61 @@ const fetchBuses = async() => {
         // Reconstruct NLB buses
         try {
             // axiosRetry(axios, { retry: 3 });
+            console.info(chalk.blue(`[scrape] Now implementing NLB routes`))
             const nlbResponse = await axios('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list');
             const nlbRoutes = nlbResponse.data.routes
-            const originRegex = /^\w.* \>/;
-            const destRegex = /\> \w.*$/;
-            for (const route of nlbRoutes) {
+            const originRegex = /^.*\>/;
+            const destRegex = /\>.*$/;
+            for (const route of nlbRoutes) { //Loop for nlb Routes and try to find route with same routeNo, origin and destination
                 const origin = route.routeName_e.match(originRegex)[0].replace(' >', '').replace(checkParenthesis, '');
                 const dest = route.routeName_e.match(destRegex)[0].replace('> ', '').replace(checkParenthesis, '');
                 const checkIndex = buses.findIndex(bus => bus.company.includes('NLB') && bus.routeNo == route.routeNo && bus.destEN.replaceAll(' ', '').includes(dest.replaceAll(' ', '')) && bus.originEN.replaceAll(' ', '').includes(origin.replaceAll(' ', '')));
                 if (checkIndex != -1) {
                     buses[checkIndex].altId = route.routeId;
                 } else {
-                    console.log(chalk.yellow(`NLB alt index not found for ${route.routeNo}: ${route.routeName_e}`))
-                    console.log(`Dest and origin match: ${buses.some(bus => bus.originEN.includes(origin) && bus.destEN.includes(dest))} \n`)
+                    // If not found, try to loosen the restraints to bind altId
+                    const checkIndex = buses.findIndex(bus => bus.routeNo === route.routeNo && bus.company.includes('NLB'));
+                    if (checkIndex != -1 ){
+                        console.debug(chalk.yellow(`[scrape] NLB route ${route.routeNo} with altID ${route.routeId} binded to ${buses[checkIndex].routeId}`))
+                        buses[checkIndex].altId = route.routeId;
+                    } else {
+                        const newNlbRoute: BusRoute = {
+                            company: ['NLB'],
+                            type: 'bus',
+                            routeId: 'nlb' + route.routeId,
+                            routeNo: route.routeNo,
+                            serviceMode: 'S',
+                            specialType: 'S',
+                            infoLink: 'https://www.nlb.com.hk/route?q=' + route.routeNo,
+                            fullFare: '0',
+                            direction: 1,
+                            journeyTime: 0,
+                            destTC: route.routeName_c.match(destRegex)[0].replace('> ', ''),
+                            destEN: route.routeName_e.match(destRegex)[0].replace('> ', ''),
+                            originTC: route.routeName_c.match(originRegex)[0].replace(' >', ''),
+                            originEN: route.routeName_e.match(originRegex)[0].replace(' >', ''),
+                            starred: false,
+                            stops: []
+                        }
+                        const { data: newRouteStops} = await axios(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${route.routeId}`);
+                        for (let i = 0; i < newRouteStops.length; i++){
+                            const newStop:BusStop = {
+                                nameTC: newRouteStops[i].stopName_c,
+                                nameEN: newRouteStops[i].stopName_w,
+                                stopId: newRouteStops[i].stopId,
+                                seq: i + 1,
+                                coord: [newRouteStops[i].latitude, newRouteStops[i].longitude],
+                                etas: []
+                            }
+                            newNlbRoute.stops.push(newStop);
+                        }
+                        console.debug(chalk.yellow(`[scrape] Created NLB Route ${newNlbRoute.routeNo}: ${newNlbRoute.originTC} => ${newNlbRoute.destTC}`));
+                        buses.push(newNlbRoute);
+                    }
                 }
             }
-            const filteredBus = buses.filter(bus => bus.routeNo === 'B2');
-            console.log(filteredBus)
+            // const filteredBus = buses.filter(bus => bus.routeNo.includes('11'));
+            // console.log(filteredBus)
         } catch (err) {
             console.error(err)
         }
