@@ -13,7 +13,7 @@ export interface Route {
     routeNo: string;
     direction: number;
     serviceMode: string;
-    specialType: string;
+    specialType: number;
     journeyTime: number;
     fullFare: string;
     originTC: string;
@@ -28,6 +28,7 @@ export interface BusRoute extends Route {
     company: string[];
     altId?: string | number;
     stops: BusStop[];
+    timetable?: Timetable[]
 }
 
 export interface Stop {
@@ -43,10 +44,10 @@ export interface Stop {
 }
 
 export interface BusStop extends Stop {
-    timetable?: Timetable[]
+    
 }
 
-interface Timetable{
+export interface Timetable{
     title: string;
     details: {
         period: string;

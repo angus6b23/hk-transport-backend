@@ -5,7 +5,7 @@ initServer();
 
 fetchBuses().then(buses => {
     console.log(chalk.green(`Finished fetching buses`))
-    const filteredBus = buses?.filter( bus => bus.routeNo === '3R');
+    const filteredBus = buses?.filter( bus => bus.routeNo === '277X');
     console.log(filteredBus);
     // console.log(buses);
 })
