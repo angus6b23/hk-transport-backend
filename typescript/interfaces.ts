@@ -8,7 +8,7 @@ export interface genericResponse {
 
 // Route related interface
 export interface Route {
-    type: 'bus' | 'minibus' | 'ferry' | 'mtr';
+    type: ts.TransportType;
     routeId: ts.RouteId;
     routeNo: string;
     direction: number;
@@ -20,7 +20,8 @@ export interface Route {
     originEN: string;
     destTC: ts.StopName;
     destEN: ts.StopName;
-    infoLink: string;
+    infoLinkEN: string;
+    infoLinkTC: string;
     starred: boolean;
 }
 
@@ -31,9 +32,40 @@ export interface BusRoute extends Route {
     timetable?: Timetable[]
 }
 
+export interface MinibusRoute extends Route {
+    district: string;
+    stops: Stop[]
+}
+
+export interface FerryRoute extends Route {
+    district: string;
+    routeNameEN: string;
+    routeNameTC: string;
+    stops: Stop[];
+}
+
+export interface TramRoute extends Route {
+    routeNameEN: string;
+    routeNameTC: string;
+    stops: Stop[];
+}
+
+export interface MTRRoute {
+    type: ts.TransportType;
+    routeId: ts.RouteId;
+    direction: number;
+    originCode?: string;
+    originTC?: string;
+    originEN?: string;
+    destCode?: string;
+    destTC?: string;
+    destEN?: string;
+    stops: MTRStop[];
+}
+
 export interface Stop {
     stopId: ts.StopId;
-    coord: number[];
+    coord?: number[];
     seq: number;
     nameTC: ts.StopName;
     nameEN: ts.StopName;
@@ -44,10 +76,14 @@ export interface Stop {
 }
 
 export interface BusStop extends Stop {
-    
+    altId?: number | string;
 }
 
-export interface Timetable{
+export interface MTRStop extends Stop{
+    code: string;
+}
+
+export interface Timetable {
     title: string;
     details: {
         period: string;

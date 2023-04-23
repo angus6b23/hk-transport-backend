@@ -1,73 +1,19 @@
 import axios from 'axios';
+import axiosRetry from 'axios-retry'
 import chalk from 'chalk'
-import { BusRoute, BusStop, Route, Stop, Timetable } from '../typescript/interfaces';
-import { TransportType } from '../typescript/types';
+import { BusRoute, BusStop, Timetable } from '../typescript/interfaces';
+import {createStop, createRoute} from './create'
 // For Dev purpose only
-import busesResponse from '../dev/JSON_BUS.json';
-// import { routes as nlbRoutes } from '../dev/nlb-route.json'
+// import busesResponse from '../dev/JSON_BUS.json';
 
-const createStop = <T>(item: any): T => {
-    let { stopNameC: nameTC, stopNameE: nameEN, stopId: id, stopSeq: seq } = item.properties;
-    let { coordinates: coord } = item.geometry;
-    let newStop: Stop = {
-        nameTC: nameTC.replace('<br>', ''),
-        nameEN: nameEN.replace('<br>', ''),
-        stopId: id,
-        seq: seq,
-        coord: coord,
-        etas: []
-    };
-    return newStop as T
-}
-
-const createRoute = <T>(item: any, type: TransportType): T => {
-    let { companyCode, routeNameE: routeNo, routeId, serviceMode, specialType, hyperlinkE: infoLink, fullFare, routeSeq: direction, journeyTime } = item.properties; //Deconstruct item;
-    let originEN, originTC, destEN, destTC;
-    if (item.properties.routeSeq == 1) { //Direction 1 = Inbound
-        destTC = item.properties.locEndNameC;
-        destEN = item.properties.locEndNameE;
-        originTC = item.properties.locStartNameC;
-        originEN = item.properties.locStartNameE;
-    } else { //Direction 2 = Outbound
-        destTC = item.properties.locStartNameC;
-        destEN = item.properties.locStartNameE;
-        originTC = item.properties.locEndNameC;
-        originEN = item.properties.locEndNameE;
-    }
-    let newRoute: Route = {
-        type: type,
-        routeId: routeId,
-        routeNo: routeNo,
-        serviceMode: serviceMode,
-        specialType: specialType,
-        infoLink: infoLink,
-        fullFare: fullFare,
-        direction: direction,
-        journeyTime: journeyTime,
-        destTC: destTC,
-        destEN: destEN,
-        originTC: originTC,
-        originEN: originEN,
-        starred: false,
-    }
-    if (type == 'bus') {
-        const company = companyCode.split('+');
-        let newBusRoute: BusRoute = {
-            ...newRoute,
-            company: company,
-            stops: []
-        }
-        return newBusRoute as T;
-    }
-    return newRoute as T
-}
+axiosRetry(axios, { retries: 3 });
 
 const fetchBuses = async () => {
-    console.log(chalk.blue(`[scrape] Start fetching buses`))
+    console.info(chalk.blue(`[scrape] Start fetching buses`))
     try {
-        // const busesResponse = await axios('https://static.data.gov.hk/td/routes-fares-geojson/JSON_BUS.json'); //Get all buses information from data.gov.hk
-        // const busesObj = busesResponse.data.features;
-        const busesObj = busesResponse.features
+        const busesResponse = await axios('https://static.data.gov.hk/td/routes-fares-geojson/JSON_BUS.json'); //Get all buses information from data.gov.hk
+        const busesObj = busesResponse.data.features
+        // const busesObj = busesResponse.features;
         let buses: BusRoute[] = busesObj.reduce(function (buses: BusRoute[], item: any) {
             //reduce(function (accumulator, currentValue) { ... }, initialValue)
             const newStop = createStop<BusStop>(item);
@@ -83,13 +29,15 @@ const fetchBuses = async () => {
         }, []); //Initial value for reduce
         // Implement Special Routes, timetable and detailed map route from KMB API
         buses = await implementKMB(buses);
+        // Implement CTB buses with changes in stop and stopId for ETA
+        buses = await implementCTB(buses);
         // Implement altId and additional routes from NLB API
-        buses = await implementNLB(buses)
+        buses = await implementNLB(buses);
 
         return buses;
     }
     catch (err) {
-        console.error(err);
+        console.error(chalk.red(`[scrape] Error while scraping bus: ${err}`));
     }
 }
 
@@ -114,7 +62,7 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         const kmbBuses = buses.filter(bus => bus.company.includes('KMB') || bus.company.includes('LWB'));
         for (let kmbBus of kmbBuses) {
             const timetableResponse = await axios(`https://search.kmb.hk/KMBWebSite/Function/FunctionRequest.ashx?action=getschedule&route=${kmbBus.routeNo}&bound=${kmbBus.direction}`);
-            console.log(chalk.grey(`Fetching ${kmbBus.routeNo}: ${kmbBus.originTC} > ${kmbBus.destTC}`))
+            // console.log(chalk.grey(`Fetching ${kmbBus.routeNo}: ${kmbBus.originTC} > ${kmbBus.destTC}`))
             const specialType = (kmbBus.specialType == 0) ? 1 : kmbBus.specialType;
             const timetable = timetableResponse.data.data[`0${specialType}`];
             const newTimeTable: Timetable[] = [];
@@ -176,7 +124,8 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                         routeNo: route.routeNo,
                         serviceMode: 'S',
                         specialType: 0,
-                        infoLink: 'https://www.nlb.com.hk/route?q=' + route.routeNo,
+                        infoLinkEN: 'https://www.nlb.com.hk/route?q=' + route.routeNo,
+                        infoLinkTC: 'https://www.nlb.com.hk/route?q=' + route.routeNo,
                         fullFare: '0',
                         direction: 1,
                         journeyTime: 0,
@@ -189,13 +138,13 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                     }
                     // Pull stops of specific route from NLB API
                     const { data: newRouteStops } = await axios(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${route.routeId}`);
-                    for (let i = 0; i < newRouteStops.length; i++) {
+                    for (let i = 0; i < newRouteStops.stops.length; i++) {
                         const newStop: BusStop = {
-                            nameTC: newRouteStops[i].stopName_c,
-                            nameEN: newRouteStops[i].stopName_w,
-                            stopId: newRouteStops[i].stopId,
+                            nameTC: newRouteStops.stops[i].stopName_c,
+                            nameEN: newRouteStops.stops[i].stopName_e,
+                            stopId: newRouteStops.stops[i].stopId,
                             seq: i + 1,
-                            coord: [newRouteStops[i].latitude, newRouteStops[i].longitude],
+                            coord: [newRouteStops.stops[i].longitude, newRouteStops.stops[i].latitude],
                             etas: []
                         }
                         newNlbRoute.stops.push(newStop);
@@ -209,6 +158,77 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         console.error(chalk.red(`[scrape] Error while implementing NLB API: ${err}`));
         return buses
     }
+}
+
+const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
+    const warningCount = {
+        targetWarn: 0,
+        routeWarn: 0
+    }
+    console.info(chalk.blue(`[scrape] Now implementing CTB routes`))
+    try {
+        const ctbBuses = buses.filter(bus => bus.company.includes('CTB') || bus.company.includes('NWFB'));
+        // Create Array for fetching all route data
+        const ctbIdReq = ctbBuses.map(ctbBus => {
+            const company =
+                (ctbBus.company.includes('CTB')) ? 'CTB' :
+                (ctbBus.company.includes('NWFB')) ? 'NWFB' : null;
+            const direction = (ctbBus.direction == 1) ? 'outbound' : 'inbound'; //Direction 1 = outbound, 2 = inbound
+            return axios.get(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/route-stop/${company}/${ctbBus.routeNo}/${direction}`)
+        })
+        // Fetch all routes,
+        const ctbIdRes = (await axios.all(ctbIdReq)).map(res => res.data);
+        // then map all stop ids to stopSet
+        const stopSet = new Set();
+        for (let res of ctbIdRes) {
+            for (let id of res.data) {
+                stopSet.add(id.stop);
+            }
+        }
+        console.info(chalk.blue(`[scrape] Now getting all ctb and nwfb stop ids`))
+        // Create array for fetching all stops data, then fetch all stops
+        const stopReq = Array.from(stopSet).map(id => axios.get(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${id}`))
+        const stopRes = await axios.all(stopReq);
+        // Loop through all routes,
+        for (let i = 0; i < ctbIdRes.length; i++) {
+            let newStopList: BusStop[] = [];
+            let targetRoute = ctbIdRes[i].data;
+            // Then loop through all stops of corresponding route
+            for (let j = 0; j < targetRoute.length; j++) {
+                const newStopRes = stopRes.find(axios => axios.config.url == `https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${targetRoute[j].stop}`);
+                const newStop: BusStop = {
+                    seq: j + 1,
+                    stopId: newStopRes?.data.data.stop,
+                    nameEN: newStopRes?.data.data.name_en,
+                    nameTC: newStopRes?.data.data.name_tc,
+                    coord: [newStopRes?.data.data.long, newStopRes?.data.data.lat]
+                }
+                newStopList.push(newStop);
+            }
+            if (!targetRoute[0]){
+                warningCount.targetWarn += 1
+                continue;
+            }
+            // Note: CTB api inbound and outbound is not consistent with Gov Geojson!!
+            // Find CTB with corresponding origin and route No
+            const checkIndex = ctbBuses.findIndex(ctbBus => ctbBus.routeNo === targetRoute[0].route && ctbBus.originTC[0] == newStopList[0].nameTC[0] || ctbBus.originTC.includes(newStopList[0].nameTC.slice(0,2)));
+            if (checkIndex == -1) {
+                // console.log(chalk.red(`Route not found: ${ctbBuses[i].routeNo} : ${ctbBuses[i].originTC} =/= ${newStopList[0].nameTC}`));
+                warningCount.routeWarn += 1;
+                ctbBuses[i].stops = newStopList;
+            } else {
+                // console.log(chalk.grey(`Found: ${ctbBuses[checkIndex].routeNo} : ${ctbBuses[checkIndex].originTC} = ${newStopList[0].nameTC} => ${ctbBuses[checkIndex].destTC}`));
+                ctbBuses[checkIndex].stops = newStopList
+            }
+        }
+    } catch (err) {
+        console.error(chalk.red(`[scrape] Error: Implementing CTB API - ${err}`))
+        return buses
+    }
+    if (warningCount.routeWarn > 0 || warningCount.targetWarn > 0){
+        console.warn(chalk.yellow(`[scrape] Warning: CTB / NSFB ${warningCount.targetWarn} routes are ignored and ${warningCount.routeWarn} routes are implemented forcefully. Some data may not be implemented and therefore inaccurate.`))
+    }
+    return buses
 }
 
 export default fetchBuses
