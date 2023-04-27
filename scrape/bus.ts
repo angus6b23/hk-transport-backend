@@ -73,13 +73,13 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                         newTimeTable.push({
                             title: slot.DayType.replaceAll(' ', ''),
                             details: [{
-                                period: slot.BoundTest1,
+                                period: slot.BoundText1,
                                 freq: slot.BoundTime1
                             }]
                         })
                     } else {
                         newTimeTable[checkIndex].details.push({
-                            period: slot.BoundTest1,
+                            period: slot.BoundText1,
                             freq: slot.BoundTime1
                         })
                     }

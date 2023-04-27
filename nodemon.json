@@ -1,6 +1,9 @@
 {
     "verbose": false,
     "ignore": [
-        "./dev/*"
-    ]
+        "./dev/*",
+        "./cache/*",
+        "./public/*"
+    ],
+    "ext": "js, ts, json, yaml"
 }

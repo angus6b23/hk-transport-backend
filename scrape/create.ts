@@ -99,14 +99,24 @@ const createMTRRoute = (item: any): MTRRoute => {
     return newMTRRoute
 }
 
+const createLRRoute = (item: any): MTRRoute => {
+    let newLRRoute: MTRRoute = {
+        type: 'lightRail',
+        routeId: item['Line Code'],
+        direction: item['Direction'],
+        stops: []
+    }
+    return newLRRoute
+}
+
 const createMTRStop = (item: any): MTRStop => {
     return {
         stopId: item['Station ID'],
-        seq: item['Sequence'],
+        seq: Number(item['Sequence']),
         nameTC: item['Chinese Name'],
         nameEN: item['English Name'],
         code: item['Station Code'],
         etas: []
     }
 }
-export {createStop, createRoute, createMTRRoute, createMTRStop}
+export {createStop, createRoute, createMTRRoute, createMTRStop, createLRRoute}

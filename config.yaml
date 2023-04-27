@@ -1,0 +1,7 @@
+server:
+  port: 5000
+
+scraper:
+  cron: '0 3 * * *'
+  forceRebuild: 3
+  chunkSize: 50

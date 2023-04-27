@@ -6,6 +6,17 @@ export interface genericResponse {
     data?: any | any[]
 }
 
+export interface Config {
+    server: {
+        port: number;
+    },
+    scraper: {
+        cron: string;
+        forceRebuild: number;
+        chunkSize: number;
+    }
+}
+
 // Route related interface
 export interface Route {
     type: ts.TransportType;

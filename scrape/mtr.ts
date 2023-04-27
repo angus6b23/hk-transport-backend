@@ -15,10 +15,9 @@ const PAPACONFIG = {
 
 const fetchMTR = async () => {
     console.info(chalk.blue(`[scrape] Start fetching MTR`))
-    const mtr: MTRRoute[] = []
     try {
         const mtrResponse = await axios('https://opendata.mtr.com.hk/data/mtr_lines_and_stations.csv'); //Get all mtr information from data.gov.hk
-        const mtrCSV = mtrResponse.data.replaceAll(',,,,,,\r\n', '');
+        const mtrCSV = mtrResponse?.data.replaceAll(',,,,,,\r\n', '');
         let mtrData = papa.parse(mtrCSV, PAPACONFIG).data;
         let mtr: MTRRoute[] = mtrData.reduce(function (mtr: MTRRoute[], item: any){
             const newStop: MTRStop = createMTRStop(item);

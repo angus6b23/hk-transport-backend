@@ -1,16 +1,15 @@
 import chalk from 'chalk';
-import express, { Express, Response, Request} from 'express'
-import config from '../config.json';
-
+import express, { Express } from 'express';
+import { Config } from '../typescript/interfaces'
+import routes from './routes'
 const server: Express = express();
-const serverConfig = config.server
 
-const initServer = ()=>{
-    server.use(express.static('public'));
 
-    server.listen(serverConfig.port, ()=>{
-        console.info(chalk.green(`[server] listening on port ${serverConfig.port}`))
-    
+const initServer = (config: Config) => {
+    // server.use(express.static('public'));
+    server.use('/hk-transport', routes);
+    server.listen(config.server.port, () => {
+        console.info(chalk.green(`[server] listening on port ${config.server.port}`))
     })
 
 }
