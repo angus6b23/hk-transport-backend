@@ -4,18 +4,20 @@ import chalk from 'chalk'
 import { Config } from './typescript/interfaces';
 import cron from 'node-cron'
 
-import { fetchAll } from './scrape/controller'
+import { fetchAll, createHashes } from './scrape/controller'
 import initServer from "./express-modules/create-server";
 
 let config: Config
 
 
-fs.promises.readFile('./config.yaml', 'utf-8').then((data) => {
+fs.promises.readFile('./config.yaml', 'utf-8').then(async(data) => {
     config = yaml.parse(data);
+    await createHashes();
     initServer(config);
     // fetchAll(config);
     cron.schedule('5 3 * * *' , ()=>{
-        console.log(chalk.grey('task run'))
+        console.log(chalk.grey('task run'));
+        fetchAll(config)
     })
 }).catch(err => {
     console.error(chalk.red(`[app] Error while loading config: ${err}`))

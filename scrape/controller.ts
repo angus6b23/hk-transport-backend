@@ -25,10 +25,15 @@ const fetchAll = async (config: Config) => {
     await Promise.all([busPromise, minibusPromise, ferryPromise, mtrPromise, tramPromise, lrPromise])
     console.info(chalk.green(`[scrape] Finished fetching and creating all transport type`));
     // Read Dir of chunked folder and create hash for all json;
+    
+    
+}
+
+const createHashes = async () => {
     const files = await fs.promises.readdir('./public/chunked');
     let hash: any = {}
     for (let file of files) {
-        const content = await fs.promises.readFile(`./public/chunked/${file}`, 'utf-8');
+        const content = await fs.promises.readFile(`./public/chunked/${file}`);
         const key = file.replace('.json', '');
         hash[key] = sha256(content);
     }
@@ -36,7 +41,6 @@ const fetchAll = async (config: Config) => {
 
 
 }
-
 
 const chunk = (array: any[], chunkSize: number) => {
     let res: any[] = []
@@ -92,4 +96,4 @@ const createPromise = async (type: TransportType, chunkSize: number) => {
         }
     })
 }
-export { fetchAll }
+export { fetchAll, createHashes }
