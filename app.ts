@@ -15,6 +15,8 @@ fs.promises.readFile('./config.yaml', 'utf-8').then(async(data) => {
     await createHashes();
     initServer(config);
     if (fs.existsSync('./public/hash.json')){
+        fs.mkdirSync('public');
+        fs.mkdirSync('public/chunked');
         console.info(chalk.yellow(`[app] Hashes not found, rebuilding chunks and hashses`))
         fetchAll(config)
     }
