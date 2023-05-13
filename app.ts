@@ -14,7 +14,10 @@ fs.promises.readFile('./config.yaml', 'utf-8').then(async(data) => {
     config = yaml.parse(data);
     await createHashes();
     initServer(config);
-    // fetchAll(config);
+    if (fs.existsSync('./public/hash.json')){
+        console.info(chalk.yellow(`[app] Hashes not found, rebuilding chunks and hashses`))
+        fetchAll(config)
+    }
     cron.schedule('5 3 * * *' , ()=>{
         console.log(chalk.grey('task run'));
         fetchAll(config)

@@ -4,7 +4,8 @@
   "description": "Backend for hk-transport",
   "main": "app.ts",
   "scripts": {
-    "dev": "npx nodemon"
+    "dev": "npx nodemon",
+    "start": "npx ts-node app"
   },
   "author": "Angus",
   "license": "MIT",
