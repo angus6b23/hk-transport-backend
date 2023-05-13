@@ -23,10 +23,9 @@ const fetchAll = async (config: Config) => {
     const lrPromise = createPromise('lightRail', chunkSize)
     // Wait all promises to be fullfilled
     await Promise.all([busPromise, minibusPromise, ferryPromise, mtrPromise, tramPromise, lrPromise])
-    console.info(chalk.green(`[scrape] Finished fetching and creating all transport type`));
     // Read Dir of chunked folder and create hash for all json;
-    
-    
+    await createHashes();
+    console.info(chalk.green(`[scrape] Finished fetching and creating all transport type`));
 }
 
 const createHashes = async () => {
