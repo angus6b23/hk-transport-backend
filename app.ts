@@ -12,7 +12,7 @@ let config: Config
 
 fs.promises.readFile('./config.yaml', 'utf-8').then(async(data) => {
     config = yaml.parse(data);
-    if (fs.existsSync('./public/hash.json')){
+    if (!fs.existsSync('./public/hash.json')){
         fs.mkdirSync('public');
         fs.mkdirSync('public/chunked')
         console.info(chalk.yellow(`[app] Hashes not found, rebuilding chunks and hashses`))
