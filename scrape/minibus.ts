@@ -2,7 +2,7 @@ import axios from 'axios';
 import axiosRetry from 'axios-retry'
 import chalk from 'chalk';
 import sleep from './sleep';
-import { MinibusRoute, Route, Stop } from '../typescript/interfaces';
+import { MinibusRoute, Stop } from '../typescript/interfaces';
 import { createStop, createRoute } from './create'
 
 axiosRetry(axios, { retries: 3 });
@@ -29,9 +29,8 @@ const fetchMinibus = async () => {
 
 		// Get all stops of minibuses
 		minibuses = await getRouteStops(minibuses);
-		console.info(chalk.blue(`[scrape] Sleeping for 90s to prevent 429`))
+		console.info(chalk.blue(`[scrape] Sleeping for 90s to prevent 429 error`))
 		// Get all stop coords
-		await sleep(90 * 1000);
 		minibuses = await getStopCoords(minibuses)
 		return minibuses
 	} catch (err) {
@@ -80,7 +79,10 @@ const getStopCoords = async (minibuses: MinibusRoute[]) => {
 				stopIdList.add(stop.stopId)
 			}
 		}
-		const allReq = Array.from(stopIdList).map(id => axios.get(`https://data.etagmb.gov.hk/stop/${id}`));
+		const allReq = Array.from(stopIdList).map(async(id) => {
+			await sleep(100);
+			return axios.get(`https://data.etagmb.gov.hk/stop/${id}`);
+		});
 		const allRes = await axios.all(allReq);
 		for (const res of allRes) {
 			const id = res.request.path.replace('/stop/', '');
