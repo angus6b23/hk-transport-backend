@@ -9,7 +9,7 @@ import { createStop, createRoute } from './create'
 axiosRetry(axios, { retries: 3 });
 
 const fetchTram = async () => {
-    console.info(chalk.blue(`[scrape] Start fetching trams`))
+    console.info(chalk.blue(`[tram] Start fetching trams`))
     try {
         const tramResponse = await axios('https://static.data.gov.hk/td/routes-fares-geojson/JSON_TRAM.json'); //Get all tram information from data.gov.hk
         const tramObj = tramResponse.data.features
@@ -30,7 +30,7 @@ const fetchTram = async () => {
         return trams;
     }
     catch (err) {
-        console.error(chalk.red(`[scrape] Error while scraping tram: ${err}`));
+        console.error(chalk.red(`[tram] Error while scraping tram: ${err}`));
     }
 }
 

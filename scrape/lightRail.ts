@@ -14,7 +14,7 @@ const PAPACONFIG = {
 }
 
 const fetchLightRail = async () => {
-    console.info(chalk.blue(`[scrape] Start fetching Light Rail`))
+    console.info(chalk.blue(`[light-rail] Start fetching Light Rail`))
     try {
         const lrResponse = await axios('https://opendata.mtr.com.hk/data/light_rail_routes_and_stops.csv'); //Get all light rail information from data.gov.hk
         const lrCSV = lrResponse?.data.replaceAll(',,,,,,\r\n', '');
@@ -44,7 +44,7 @@ const fetchLightRail = async () => {
         return lr
     }
     catch (err) {
-        console.error(chalk.red(`[scrape] Error while scraping Light Rail: ${err}`));
+        console.error(chalk.red(`[light-rail] Error while scraping Light Rail: ${err}`));
     }
 }
 

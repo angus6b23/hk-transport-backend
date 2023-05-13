@@ -10,7 +10,7 @@ import { createStop, createRoute } from './create'
 axiosRetry(axios, { retries: 3 });
 
 const fetchFerry = async () => {
-    console.info(chalk.blue(`[scrape] Start fetching ferries`))
+    console.info(chalk.blue(`[ferry] Start fetching ferries`))
     try {
         const ferryResponse = await axios('https://static.data.gov.hk/td/routes-fares-geojson/JSON_FERRY.json'); //Get all ferry information from data.gov.hk
         const ferryObj = ferryResponse.data.features
@@ -31,7 +31,7 @@ const fetchFerry = async () => {
         return ferries;
     }
     catch (err) {
-        console.error(chalk.red(`[scrape] Error while scraping ferry: ${err}`));
+        console.error(chalk.red(`[ferry] Error while scraping ferry: ${err}`));
     }
 }
 

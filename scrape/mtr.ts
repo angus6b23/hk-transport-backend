@@ -14,7 +14,7 @@ const PAPACONFIG = {
 }
 
 const fetchMTR = async () => {
-    console.info(chalk.blue(`[scrape] Start fetching MTR`))
+    console.info(chalk.blue(`[mtr] Start fetching MTR`))
     try {
         const mtrResponse = await axios('https://opendata.mtr.com.hk/data/mtr_lines_and_stations.csv'); //Get all mtr information from data.gov.hk
         const mtrCSV = mtrResponse?.data.replaceAll(',,,,,,\r\n', '');
@@ -45,7 +45,7 @@ const fetchMTR = async () => {
         return mtr
     }
     catch (err) {
-        console.error(chalk.red(`[scrape] Error while scraping MTR: ${err}`));
+        console.error(chalk.red(`[mtr] Error while scraping MTR: ${err}`));
     }
 }
 

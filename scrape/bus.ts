@@ -9,7 +9,7 @@ import {createStop, createRoute} from './create'
 axiosRetry(axios, { retries: 3 });
 
 const fetchBuses = async () => {
-    console.info(chalk.blue(`[scrape] Start fetching buses`))
+    console.info(chalk.blue(`[bus] Start fetching buses`))
     try {
         const busesResponse = await axios('https://static.data.gov.hk/td/routes-fares-geojson/JSON_BUS.json'); //Get all buses information from data.gov.hk
         const busesObj = busesResponse.data.features
@@ -37,14 +37,14 @@ const fetchBuses = async () => {
         return buses;
     }
     catch (err) {
-        console.error(chalk.red(`[scrape] Error while scraping bus: ${err}`));
+        console.error(chalk.red(`[bus] Error while scraping bus: ${err}`));
     }
 }
 
 const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     // Get service modes from kmb
     try {
-        console.info(chalk.blue(`[scrape] Now implementing KMB routes`));
+        console.info(chalk.blue(`[bus] Now implementing KMB routes`));
         const checkParenthesis = /\(.*$/; // Remove parenthesis due to different naming
         // Download all Kmb routes
         // Bind KMB / LMB specialType into existing routes
@@ -89,7 +89,7 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         }
         return buses
     } catch (err) {
-        console.error(chalk.red(`[scrape] Error while implementing KMB API: ${err}`));
+        console.error(chalk.red(`[bus] Error while implementing KMB API: ${err}`));
         return buses
     }
 }
@@ -98,7 +98,7 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     const checkParenthesis = /\(.*$/; // Remove parenthesis due to different naming
     try {
         // axiosRetry(axios, { retry: 3 });
-        console.info(chalk.blue(`[scrape] Now implementing NLB routes`))
+        console.info(chalk.blue(`[bus] Now implementing NLB routes`))
         const nlbResponse = await axios('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list');
         const nlbRoutes = nlbResponse.data.routes
         const originRegex = /^.*\>/;
@@ -155,7 +155,7 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         }
         return buses
     } catch (err) {
-        console.error(chalk.red(`[scrape] Error while implementing NLB API: ${err}`));
+        console.error(chalk.red(`[bus] Error while implementing NLB API: ${err}`));
         return buses
     }
 }
@@ -165,7 +165,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         targetWarn: 0,
         routeWarn: 0
     }
-    console.info(chalk.blue(`[scrape] Now implementing CTB routes`))
+    console.info(chalk.blue(`[bus] Now implementing CTB routes`))
     try {
         const ctbBuses = buses.filter(bus => bus.company.includes('CTB') || bus.company.includes('NWFB'));
         // Create Array for fetching all route data
@@ -185,7 +185,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                 stopSet.add(id.stop);
             }
         }
-        console.info(chalk.blue(`[scrape] Now getting all ctb and nwfb stop ids`))
+        console.info(chalk.blue(`[bus] Now getting all ctb and nwfb stop ids`))
         // Create array for fetching all stops data, then fetch all stops
         const stopReq = Array.from(stopSet).map(id => axios.get(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${id}`))
         const stopRes = await axios.all(stopReq);
@@ -222,11 +222,11 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             }
         }
     } catch (err) {
-        console.error(chalk.red(`[scrape] Error: Implementing CTB API - ${err}`))
+        console.error(chalk.red(`[bus] Error: Implementing CTB API - ${err}`))
         return buses
     }
     if (warningCount.routeWarn > 0 || warningCount.targetWarn > 0){
-        console.warn(chalk.yellow(`[scrape] Warning: CTB / NSFB ${warningCount.targetWarn} routes are ignored and ${warningCount.routeWarn} routes are implemented forcefully. Some data may not be implemented and therefore inaccurate.`))
+        console.warn(chalk.yellow(`[bus] Warning: CTB / NSFB ${warningCount.targetWarn} routes are ignored and ${warningCount.routeWarn} routes are implemented forcefully. Some data may not be implemented and therefore inaccurate.`))
     }
     return buses
 }

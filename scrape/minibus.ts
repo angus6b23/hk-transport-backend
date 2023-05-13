@@ -8,7 +8,7 @@ import { createStop, createRoute } from './create'
 axiosRetry(axios, { retries: 3 });
 
 const fetchMinibus = async () => {
-	console.info(chalk.blue(`[scrape] Start fetching minibuses`));
+	console.info(chalk.blue(`[minibus] Start fetching minibuses`));
 	try {
 		const minibusesResponse = await axios('https://static.data.gov.hk/td/routes-fares-geojson/JSON_GMB.json'); //Get all buses information from data.gov.hk
 		const minibusesObj = minibusesResponse.data.features
@@ -29,18 +29,17 @@ const fetchMinibus = async () => {
 
 		// Get all stops of minibuses
 		minibuses = await getRouteStops(minibuses);
-		console.info(chalk.blue(`[scrape] Sleeping for 90s to prevent 429 error`))
 		// Get all stop coords
 		minibuses = await getStopCoords(minibuses)
 		return minibuses
 	} catch (err) {
-		console.error(chalk.red(`[scrape] Error while scraping minibus: ${err}`));
+		console.error(chalk.red(`[minibus] Error while scraping minibus: ${err}`));
 	}
 }
 
 const getRouteStops = async (minibuses: MinibusRoute[]) => {
 	try {
-		console.info(chalk.blue(`[scrape] Start fetching minibus route-stops`));
+		console.info(chalk.blue(`[minibus] Start fetching minibus route-stops`));
 		const stopReq = minibuses.map(route => axios.get(`https://data.etagmb.gov.hk/route-stop/${route.routeId}/${route.direction}`))
 		const stopRes = await axios.all(stopReq);
 		for (let i = 0; i < stopRes.length; i++) {
@@ -59,12 +58,12 @@ const getRouteStops = async (minibuses: MinibusRoute[]) => {
 				}
 			}
 			if (newStopList.length == 0) {
-				console.warn(chalk.yellow(`[scrape] Minibus No ${minibuses[i].routeNo} stops not found`))
+				console.warn(chalk.yellow(`[minibus] Minibus No ${minibuses[i].routeNo} stops not found`))
 			}
 			minibuses[i].stops = (newStopList.length > 0) ? newStopList : minibuses[i].stops;
 		}
 	} catch (err) {
-		console.error(chalk.red(`[scrape] Error while getting minibuses stops: ${err}`))
+		console.error(chalk.red(`[minibus] Error while getting minibuses stops: ${err}`))
 	}
 	return minibuses;
 }
@@ -72,7 +71,7 @@ const getRouteStops = async (minibuses: MinibusRoute[]) => {
 const getStopCoords = async (minibuses: MinibusRoute[]) => {
 
 	try {
-		console.info(chalk.blue('[scrape] Start fetching minibus stop coords'))
+		console.info(chalk.blue('[minibus] Start fetching minibus stop coords'))
 		let stopIdList = new Set();
 		for (const minibus of minibuses) {
 			for (let stop of minibus.stops) {
@@ -80,7 +79,7 @@ const getStopCoords = async (minibuses: MinibusRoute[]) => {
 			}
 		}
 		const allReq = Array.from(stopIdList).map(async(id) => {
-			await sleep(100);
+			await sleep(200);
 			return axios.get(`https://data.etagmb.gov.hk/stop/${id}`);
 		});
 		const allRes = await axios.all(allReq);
@@ -101,7 +100,7 @@ const getStopCoords = async (minibuses: MinibusRoute[]) => {
 		}
 		return minibuses
 	} catch (err) {
-		console.log(chalk.red(`[scrape] Error while getting minibus stops coord: ${err}`))
+		console.log(chalk.red(`[minibus] Error while getting minibus stops coord: ${err}`))
 		return minibuses
 	}
 }
