@@ -12,17 +12,18 @@ let config: Config
 
 fs.promises.readFile('./config.yaml', 'utf-8').then(async(data) => {
     config = yaml.parse(data);
-    await createHashes();
-    initServer(config);
     if (fs.existsSync('./public/hash.json')){
         fs.mkdirSync('public');
-        fs.mkdirSync('public/chunked');
+        fs.mkdirSync('public/chunked')
         console.info(chalk.yellow(`[app] Hashes not found, rebuilding chunks and hashses`))
         fetchAll(config)
     }
-    cron.schedule('5 3 * * *' , ()=>{
+    await createHashes();
+    initServer(config);
+    cron.schedule('5 3 * * *' , async ()=>{
         console.log(chalk.grey('task run'));
-        fetchAll(config)
+        await fetchAll(config);
+        await createHashes();
     })
 }).catch(err => {
     console.error(chalk.red(`[app] Error while loading config: ${err}`))
