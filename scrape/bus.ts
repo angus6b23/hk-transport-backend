@@ -69,7 +69,7 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             if (timetable) {
                 for (const slot of timetable) {
                     const checkIndex = newTimeTable.findIndex(nslot => nslot.title === slot.DayType.replaceAll(' ', ''));
-                    if (checkIndex === -1) {
+                    if (checkIndex === -1 && slot.period && slot.freq) { // Only add to timetable if all fields are satisfied
                         newTimeTable.push({
                             title: slot.DayType.replaceAll(' ', ''),
                             details: [{
@@ -77,7 +77,7 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                                 freq: slot.BoundTime1
                             }]
                         })
-                    } else {
+                    } else if(slot.period && slot.freq){
                         newTimeTable[checkIndex].details.push({
                             period: slot.BoundText1,
                             freq: slot.BoundTime1
@@ -186,7 +186,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             }
         }
         console.info(chalk.blue(`[bus] Now getting all ctb and nwfb stop ids`))
-        // Create array for fetching all stops data, then fetch all stops
+        // Create array for all request for stops
         const stopReq = Array.from(stopSet).map(id => axios.get(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${id}`))
         const stopRes = await axios.all(stopReq);
         // Loop through all routes,
@@ -198,10 +198,11 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                 const newStopRes = stopRes.find(axios => axios.config.url == `https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${targetRoute[j].stop}`);
                 const newStop: BusStop = {
                     seq: j + 1,
-                    stopId: newStopRes?.data.data.stop,
+                    stopId: newStopRes?.data.data.stop, //?targetRoute[j].stop
                     nameEN: newStopRes?.data.data.name_en,
                     nameTC: newStopRes?.data.data.name_tc,
-                    coord: [newStopRes?.data.data.long, newStopRes?.data.data.lat]
+                    coord: [newStopRes?.data.data.long, newStopRes?.data.data.lat],
+                    etas: []
                 }
                 newStopList.push(newStop);
             }
@@ -209,7 +210,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                 warningCount.targetWarn += 1
                 continue;
             }
-            // Note: CTB api inbound and outbound is not consistent with Gov Geojson!!
+            // Note: CTB api inbound and outbound is not consistent with Gov Geojson
             // Find CTB with corresponding origin and route No
             const checkIndex = ctbBuses.findIndex(ctbBus => ctbBus.routeNo === targetRoute[0].route && ctbBus.originTC[0] == newStopList[0].nameTC[0] || ctbBus.originTC.includes(newStopList[0].nameTC.slice(0,2)));
             if (checkIndex == -1) {
