@@ -11,18 +11,26 @@ import { TransportType } from '../typescript/types';
 import sha256 from 'sha256';
 
 
-const fetchAll = async (config: Config) => {
+const fetchAll = async (config: Config, types: TransportType[] = []) => {
     const chunkSize = config.scraper.chunkSize;
-
-    // Create Promises for all transport types
-    const busPromise = createPromise('bus', chunkSize);
-    const minibusPromise = createPromise('minibus', chunkSize);
-    const ferryPromise = createPromise('ferry', chunkSize);
-    const mtrPromise = createPromise('mtr', chunkSize)
-    const tramPromise = createPromise('tram', chunkSize)
-    const lrPromise = createPromise('lightRail', chunkSize)
-    // Wait all promises to be fullfilled
-    await Promise.all([busPromise, minibusPromise, ferryPromise, mtrPromise, tramPromise, lrPromise])
+    if (types.length > 0){ //Arguments will be passed from rebuildCache.ts
+        let promiseArray = []
+        for (let type of types){
+            const newPromise = createPromise(type, chunkSize);
+            promiseArray.push(newPromise);
+        }
+        await Promise.all(promiseArray)
+    } else { //Default action
+        // Create Promises for all transport types
+        const busPromise = createPromise('bus', chunkSize);
+        const minibusPromise = createPromise('minibus', chunkSize);
+        const ferryPromise = createPromise('ferry', chunkSize);
+        const mtrPromise = createPromise('mtr', chunkSize)
+        const tramPromise = createPromise('tram', chunkSize)
+        const lrPromise = createPromise('lightRail', chunkSize)
+        // Wait all promises to be fullfilled
+        await Promise.all([busPromise, minibusPromise, ferryPromise, mtrPromise, tramPromise, lrPromise])
+    }
     // Read Dir of chunked folder and create hash for all json;
     await createHashes();
     console.info(chalk.green(`[scrape] Finished fetching and creating all transport type`));

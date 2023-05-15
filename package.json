@@ -5,7 +5,8 @@
   "main": "app.ts",
   "scripts": {
     "dev": "npx nodemon",
-    "start": "npx ts-node app"
+    "start": "npx ts-node app",
+    "rebuild-cache": "npx ts-node ./scrape/rebuildCache"
   },
   "author": "Angus",
   "license": "MIT",

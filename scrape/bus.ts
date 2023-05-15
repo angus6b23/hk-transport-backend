@@ -69,7 +69,7 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             if (timetable) {
                 for (const slot of timetable) {
                     const checkIndex = newTimeTable.findIndex(nslot => nslot.title === slot.DayType.replaceAll(' ', ''));
-                    if (checkIndex === -1 && slot.period && slot.freq) { // Only add to timetable if all fields are satisfied
+                    if (checkIndex === -1 && slot.BoundText1 && slot.BoundTime1) { // Only add to timetable if all fields are satisfied
                         newTimeTable.push({
                             title: slot.DayType.replaceAll(' ', ''),
                             details: [{
@@ -77,7 +77,7 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                                 freq: slot.BoundTime1
                             }]
                         })
-                    } else if(slot.period && slot.freq){
+                    } else if (slot.BoundText1 && slot.BoundTime1){
                         newTimeTable[checkIndex].details.push({
                             period: slot.BoundText1,
                             freq: slot.BoundTime1
@@ -198,7 +198,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                 const newStopRes = stopRes.find(axios => axios.config.url == `https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${targetRoute[j].stop}`);
                 const newStop: BusStop = {
                     seq: j + 1,
-                    stopId: newStopRes?.data.data.stop, //?targetRoute[j].stop
+                    stopId: newStopRes?.data.data.stop,
                     nameEN: newStopRes?.data.data.name_en,
                     nameTC: newStopRes?.data.data.name_tc,
                     coord: [newStopRes?.data.data.long, newStopRes?.data.data.lat],
