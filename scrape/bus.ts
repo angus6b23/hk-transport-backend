@@ -174,11 +174,16 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                 (ctbBus.company.includes('CTB')) ? 'CTB' :
                 (ctbBus.company.includes('NWFB')) ? 'NWFB' : null;
             const direction = (ctbBus.direction == 1) ? 'outbound' : 'inbound'; //Direction 1 = outbound, 2 = inbound
-            return axios.get(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/route-stop/${company}/${ctbBus.routeNo}/${direction}`)
+            return axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/route-stop/${company}/${ctbBus.routeNo}/${direction}`)
+            //     {
+            //     id: ctbBus.routeId,
+            //     data: axios.get(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/route-stop/${company}/${ctbBus.routeNo}/${direction}`)
+            // }
         })
         // Fetch all routes,
         const ctbIdRes = (await axios.all(ctbIdReq)).map(res => res.data);
         // then map all stop ids to stopSet
+        
         const stopSet = new Set();
         for (let res of ctbIdRes) {
             for (let id of res.data) {
@@ -212,13 +217,13 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             }
             // Note: CTB api inbound and outbound is not consistent with Gov Geojson
             // Find CTB with corresponding origin and route No
-            const checkIndex = ctbBuses.findIndex(ctbBus => ctbBus.routeNo === targetRoute[0].route && ctbBus.originTC[0] == newStopList[0].nameTC[0] || ctbBus.originTC.includes(newStopList[0].nameTC.slice(0,2)));
+            const checkIndex = ctbBuses.findIndex(ctbBus => ctbBus.routeNo === targetRoute[0].route && newStopList[0].nameTC.includes(ctbBus.originTC) /*ctbBus.originTC[0] == newStopList[0].nameTC[0]*/ || ctbBus.originTC.includes(newStopList[0].nameTC.slice(0,2)));
             if (checkIndex == -1) {
-                // console.log(chalk.red(`Route not found: ${ctbBuses[i].routeNo} : ${ctbBuses[i].originTC} =/= ${newStopList[0].nameTC}`));
+                console.log(chalk.red(`Route not found: ${ctbBuses[i].routeNo} : ${ctbBuses[i].originTC} =/= ${newStopList[0].nameTC}`));
                 warningCount.routeWarn += 1;
                 ctbBuses[i].stops = newStopList;
             } else {
-                // console.log(chalk.grey(`Found: ${ctbBuses[checkIndex].routeNo} : ${ctbBuses[checkIndex].originTC} = ${newStopList[0].nameTC} => ${ctbBuses[checkIndex].destTC}`));
+                console.log(chalk.grey(`Found: ${ctbBuses[checkIndex].routeNo} : ${ctbBuses[checkIndex].originTC} = ${newStopList[0].nameTC} => ${ctbBuses[checkIndex].destTC}`));
                 ctbBuses[checkIndex].stops = newStopList
             }
         }

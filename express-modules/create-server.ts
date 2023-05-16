@@ -6,7 +6,8 @@ import routes from './routes'
 const server: Express = express();
 
 const corsOptions = {
-    origin: '*'
+    origin: '*',
+    optionsSuccessStatus: 200
 }
 
 const initServer = (config: Config) => {
