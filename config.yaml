@@ -1,5 +1,6 @@
 server:
   port: 5000
+  corsOrigin: '*'
 
 scraper:
   cron: '0 3 * * *'
