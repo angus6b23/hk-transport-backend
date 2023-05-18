@@ -93,6 +93,9 @@ const createMTRRoute = (item: any): MTRRoute => {
     let newMTRRoute: MTRRoute = {
         type: 'mtr',
         routeId: item['Line Code'],
+        routeNameTC: getMTRRouteNameTC(item['Line Code']),
+        routeNameEN: getMTRRouteNameEN(item['Line Code']),
+        color: getMTRColor(item['Line Code']),
         direction: (item['Direction'] === 'DT' ? 1 : 2),
         stops: []
     }
@@ -103,6 +106,8 @@ const createLRRoute = (item: any): MTRRoute => {
     let newLRRoute: MTRRoute = {
         type: 'lightRail',
         routeId: item['Line Code'],
+        routeNameTC: item['Line Code'],
+        routeNameEN: item['Line Code'],
         direction: item['Direction'],
         stops: []
     }
@@ -117,6 +122,86 @@ const createMTRStop = (item: any): MTRStop => {
         nameEN: item['English Name'],
         code: item['Station Code'],
         etas: []
+    }
+}
+
+const getMTRRouteNameTC = (code: string): string => {
+    switch(code){
+        case 'AEL':
+            return '機場快綫'
+        case 'DRL':
+            return '迪士尼綫'
+        case 'EAL':
+            return '東鐵綫'
+        case 'ISL':
+            return '港島綫'
+        case 'KTL':
+            return '觀塘綫'
+        case 'TML':
+            return '屯馬綫'
+        case 'TCL':
+            return '東涌綫'
+        case 'TKL':
+            return '將軍澳綫'
+        case 'TWL':
+            return '荃灣綫'
+        case 'SIL':
+            return '南港島綫'
+        default:
+            return '未知'
+    }
+}
+const getMTRRouteNameEN = (code: string): string => {
+    switch(code){
+        case 'AEL':
+            return 'Airport Express'
+        case 'DRL':
+            return 'Disneyland Resort Line'
+        case 'EAL':
+            return 'East Rail Line'
+        case 'ISL':
+            return 'Island Line'
+        case 'KTL':
+            return 'Kwun Tong Line'
+        case 'TML':
+            return 'Tuen Ma Line'
+        case 'TCL':
+            return 'Tung Chung Line'
+        case 'TKL':
+            return 'Tseung Kwan O Line'
+        case 'TWL':
+            return 'Tsuen Wan Line'
+        case 'SIL':
+            return 'South Island Line'
+        default:
+            return 'Unknown'
+    }
+}
+
+const getMTRColor = (code: string): string => {
+    switch (code) {
+        case 'AEL':
+            return '00888e'
+        case 'DRL':
+            return 'eb6ea5'
+        case 'EAL':
+            return '5eb7e8'
+        case 'ISL':
+            return '0075c2'
+        case 'KTL':
+            return '00a040'
+        case 'TML':
+            return '9c2e00'
+        case 'TCL':
+            return 'f3982d'
+        case 'TKL':
+            return '7e3c93'
+        case 'TWL':
+            return 'e60012'
+        case 'SIL':
+            return 'cbd300'
+        default:
+            return 'ffffff'
     }
 }
 export {createStop, createRoute, createMTRRoute, createMTRStop, createLRRoute}

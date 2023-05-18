@@ -64,6 +64,8 @@ export interface TramRoute extends Route {
 export interface MTRRoute {
     type: ts.TransportType;
     routeId: ts.RouteId;
+    routeNameTC: string;
+    routeNameEN: string;
     direction: number;
     originCode?: string;
     originTC?: string;
@@ -72,6 +74,7 @@ export interface MTRRoute {
     destTC?: string;
     destEN?: string;
     stops: MTRStop[];
+    color?: string;
 }
 
 export interface Stop {
