@@ -38,7 +38,8 @@ const fetchBuses = async () => {
         buses = await implementCTB(buses);
         // Implement altId and additional routes from NLB API
         buses = await implementNLB(buses);
-
+        // Changes company of buses starting with K into mtr
+        buses = await implementMTR(buses);
         return buses;
     }
     catch (err) {
@@ -234,5 +235,17 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     }
 }
 
+const implementMTR = (buses: BusRoute[]):BusRoute[] => {
+    return buses.map(bus => {
+        if (bus.routeNo.indexOf('K') == 0 && bus.routeNo.length <= 5){
+            return {
+                ...bus,
+                company: ['LRTFeeder']
+            }
+        } else {
+            return bus
+        }
+    })
+}
 
 export default fetchBuses
