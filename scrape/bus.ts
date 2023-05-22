@@ -134,7 +134,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                 stopSet.add(id.stop);
             }
         }
-        console.info(chalk.blue(`[bus] Now getting all ctb and nwfb stop ids`))
+        console.info(chalk.blue(`[bus] Now getting all CTB and NWFB stop ids`))
         // Create array for all request for stops
         const stopReq = Array.from(stopSet).map(id => axios.get(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${id}`))
         const stopRes = await axios.all(stopReq);
