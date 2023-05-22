@@ -2,6 +2,7 @@ import axios from 'axios';
 import axiosRetry from 'axios-retry'
 import chalk from 'chalk';
 import papa from 'papaparse';
+import sleep from './sleep'
 import { BusRoute, BusStop, Timetable } from '../typescript/interfaces';
 import { createStop, createRoute } from './create'
 // For Dev purpose only
@@ -116,11 +117,12 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     console.info(chalk.blue(`[bus] Now implementing CTB routes`))
     try {
         // Create Array for fetching all route data
-        const ctbIdReq = ctbBuses.map(ctbBus => {
+        const ctbIdReq = ctbBuses.map(async (ctbBus) => {
             const company =
                 (ctbBus.company.includes('CTB')) ? 'CTB' :
                     (ctbBus.company.includes('NWFB')) ? 'NWFB' : null;
             const direction = (ctbBus.direction == 1) ? 'outbound' : 'inbound'; //Direction 1 = outbound, 2 = inbound
+            await sleep(100);
             return axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/route-stop/${company}/${ctbBus.routeNo}/${direction}`)
         })
         // Fetch all routes,
