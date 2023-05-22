@@ -1,12 +1,19 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry'
-import chalk from 'chalk'
+import chalk from 'chalk';
+import papa from 'papaparse';
 import { BusRoute, BusStop, Timetable } from '../typescript/interfaces';
 import { createStop, createRoute } from './create'
 // For Dev purpose only
-// import busesResponse from '../dev/JSON_BUS.json';
-// import fs from 'fs'
+/*
+import busesResponse from '../dev/JSON_BUS.json';
+import fs from 'fs'
+*/
 
+const PAPACONFIG = {
+    header: true,
+    skipEmptyLines: true,
+}
 axiosRetry(axios, { retries: 3 });
 
 const fetchBuses = async () => {
@@ -32,11 +39,11 @@ const fetchBuses = async () => {
             }
             return buses;
         }, []); //Initial value for reduce
-        // Implement Special Routes, timetable and detailed map route from KMB API
+        // // Implement Special Routes, timetable and detailed map route from KMB API
         buses = await implementKMB(buses);
-        // Implement CTB buses with changes in stop and stopId for ETA
+        // // Implement CTB buses with changes in stop and stopId for ETA
         buses = await implementCTB(buses);
-        // Implement altId and additional routes from NLB API
+        // // Implement altId and additional routes from NLB API
         buses = await implementNLB(buses);
         // Changes company of buses starting with K into mtr
         buses = await implementMTR(buses);
@@ -235,17 +242,37 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     }
 }
 
-const implementMTR = (buses: BusRoute[]):BusRoute[] => {
-    return buses.map(bus => {
-        if (bus.routeNo.indexOf('K') == 0 && bus.routeNo.length <= 5){
-            return {
-                ...bus,
-                company: ['LRTFeeder']
+const implementMTR = async (buses: BusRoute[]): Promise<BusRoute[]> => {
+    try{
+        console.info(chalk.blue('[bus] Now implementing MTR bus routes'))
+        const { data: mtrBusResponse } = await axios('https://opendata.mtr.com.hk/data/mtr_bus_stops.csv')
+        const mtrBusData: any[] = papa.parse(mtrBusResponse, PAPACONFIG).data;
+        let mtrBuses: BusRoute[] = buses.filter(bus => (bus.routeNo.indexOf('K') == 0 && bus.routeNo.length <= 5) || bus.company.includes('LRTFeeder'))
+        mtrBuses.forEach(route => {
+            route.company = ['LRTFeeder']
+        })
+        for (let item of mtrBusData) {
+            let { ROUTE_ID: routeNo, DIRECTION: direction, STATION_ID: stationId, STATION_SEQNO: seq, STATION_LATITUDE: latitude, STATION_LONGITUDE: longitude, STATION_NAME_CHI: nameTC, STATION_NAME_ENG: nameEN } = item;
+            direction = (direction == 'I') ? 1 : 2;
+            let index = mtrBuses.findIndex(route => route.routeNo == routeNo && route.direction == direction);
+            if (index == -1) {
+                index = mtrBuses.findIndex(route => route.routeNo == routeNo && route.direction == 1)
             }
-        } else {
-            return bus
+            let targetBus = mtrBuses[index];
+            targetBus.stops[seq - 1] = {
+                seq: seq,
+                coord: [longitude, latitude],
+                stopId: stationId,
+                nameTC: nameTC,
+                nameEN: nameEN,
+                etas: []
+            }
         }
-    })
+        return buses;
+    } catch(err){
+        console.error(chalk.red(`[bus] Error while implementing MTR buses API: ${err}`));
+        return buses
+    }
 }
 
 export default fetchBuses
