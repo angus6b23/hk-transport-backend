@@ -29,7 +29,7 @@ const fetchBuses = async () => {
         */
         let buses: BusRoute[] = busesObj.reduce(function (buses: BusRoute[], item: any) {
             //reduce(function (accumulator, currentValue) { ... }, initialValue)
-            if (item.company == 'NLB' || item.company == 'LRTFeeder'){ //NLB and LRTFeeder buses will be implemented later
+            if (item.properties.companyCode == 'NLB' || item.properties.companyCode == 'LRTFeeder' || item.properties.routeNameC.indexOf('K') == 0){ //NLB and LRTFeeder buses will be implemented later
                 return buses                
             }
             const newStop = createStop<BusStop>(item);
@@ -45,9 +45,9 @@ const fetchBuses = async () => {
         }, []); //Initial value for reduce
         // Implement Special Routes, timetable and detailed map route from KMB API
         buses = await implementKMB(buses);
-        // // Implement CTB buses with changes in stop and stopId for ETA
+        // Implement CTB buses with changes in stop and stopId for ETA
         buses = await implementCTB(buses);
-        // // Implement altId and additional routes from NLB API
+        // Implement altId and additional routes from NLB API
         buses = await implementNLB(buses);
         // Changes company of buses starting with K into mtr
         buses = await implementMTR(buses);
@@ -306,7 +306,8 @@ const implementNLB = async(buses:BusRoute[]): Promise<BusRoute[]> => {
                     seq: j + 1,
                     nameTC: data[j].stopName_c,
                     nameEN: data[j].stopName_e,
-                    coord: [data[j].longitude, data[j].latitude]
+                    coord: [data[j].longitude, data[j].latitude],
+                    etas: []
                 }
                 stops.push(newStop);
             }
@@ -319,7 +320,7 @@ const implementNLB = async(buses:BusRoute[]): Promise<BusRoute[]> => {
         return buses
     }
 }
-
+/*
 const implementMTR = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     try {
         console.info(chalk.blue('[bus] Now implementing MTR bus routes'))
@@ -347,6 +348,87 @@ const implementMTR = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             }
         }
         return buses;
+    } catch (err) {
+        console.error(chalk.red(`[bus] Error while implementing MTR buses API: ${err}`));
+        return buses
+    }
+}
+*/
+
+const implementMTR = async (buses: BusRoute[]): Promise<BusRoute[]> => {
+    try {
+        console.info(chalk.blue('[bus] Now implementing MTR bus routes'));
+        const mtrBuses: BusRoute[] = [];
+        const { data: mtrBusResponse } = await axios('https://opendata.mtr.com.hk/data/mtr_bus_stops.csv')
+        const mtrBusData: any[] = papa.parse(mtrBusResponse, PAPACONFIG).data;
+        for (let item of mtrBusData){
+            let {ROUTE_ID: routeNo, DIRECTION: direction, STATION_SEQNO: seq, STATION_ID: stopId, STATION_LATITUDE: latitude, STATION_LONGITUDE: longitude, STATION_NAME_CHI: nameTC, STATION_NAME_ENG: nameEN} = item;
+            direction = (direction == 'O') ? 1 : 2;
+            const index = mtrBuses.findIndex(bus => bus.routeNo == routeNo && bus.direction == direction)
+            let newStop: BusStop = {
+                coord: [longitude, latitude],
+                seq: seq,
+                nameEN: nameEN,
+                nameTC: nameTC,
+                stopId: stopId,
+                etas: []
+            }
+            if (index != -1){
+                mtrBuses[index].stops.push(newStop)
+            }else {
+                let newRoute: BusRoute = {
+                    type: 'bus',
+                    company: ['LRTFeeder'],
+                    routeId: 'mtr' + routeNo,
+                    routeNo: routeNo,
+                    direction: direction,
+                    serviceMode: 'R',
+                    specialType: 1,
+                    originEN: '',
+                    originTC: '',
+                    destEN: '',
+                    destTC: '',
+                    infoLinkEN: `https://www.mtr.com.hk/en/customer/services/searchBusRouteDetails.php?routeID=${routeNo}`,
+                    infoLinkTC: `https://www.mtr.com.hk/ch/customer/services/searchBusRouteDetails.php?routeID=${routeNo}`,
+                    stops: [newStop],
+                    starred: false
+                }
+                mtrBuses.push(newRoute);
+            };
+        };
+        const {data: mtrBusRouteResponse}  = await axios('https://opendata.mtr.com.hk/data/mtr_bus_routes.csv')
+        const mtrBusRouteData: any[] = papa.parse(mtrBusRouteResponse, PAPACONFIG).data;
+        const tcOriginRegex = /^.*至/;
+        const tcDestRegex = /至.*$/;
+        const enOriginRegex = /^.*to/;
+        const enDestRegex = /to.*$/;
+        let mtrBusRoute:any [] = []
+        for (const item of mtrBusRouteData){
+            let {ROUTE_ID: routeNo, ROUTE_NAME_CHI: nameTC, ROUTE_NAME_ENG: nameEN} = item;
+            mtrBusRoute.push({
+                routeNo: routeNo,
+                originTC: nameTC.match(tcOriginRegex)[0].replace('至', ''),
+                originEN: nameEN.match(enOriginRegex)[0].replace(' to', ''),
+                destTC: nameTC.match(tcDestRegex)[0].replace('至', ''),
+                destEN: nameEN.match(enDestRegex)[0].replace('to ', '')
+            })
+        }
+        for (let bus of mtrBuses){
+            let targetBus = mtrBusRoute.find(item => item.routeNo == bus.routeNo);
+            if (bus.direction == 1){
+                bus.originTC = targetBus.originTC;
+                bus.originEN = targetBus.originEN;
+                bus.destTC = targetBus.destTC;
+                bus.destEN = targetBus.destEN;
+            } else {
+                bus.originTC = targetBus.destTC;
+                bus.originEN = targetBus.destEN;
+                bus.destTC = targetBus.originTC;
+                bus.destEN = targetBus.originEN;
+            }
+        }
+        buses = [...buses, ...mtrBuses];
+        return buses
     } catch (err) {
         console.error(chalk.red(`[bus] Error while implementing MTR buses API: ${err}`));
         return buses
