@@ -41,13 +41,13 @@ const fetchBuses = async () => {
             return buses;
         }, []); //Initial value for reduce
         // // Implement Special Routes, timetable and detailed map route from KMB API
-        buses = await implementKMB(buses);
-        // // Implement CTB buses with changes in stop and stopId for ETA
-        buses = await implementCTB(buses);
+        // buses = await implementKMB(buses);
+        // // // Implement CTB buses with changes in stop and stopId for ETA
+        // buses = await implementCTB(buses);
         // // Implement altId and additional routes from NLB API
         buses = await implementNLB(buses);
         // Changes company of buses starting with K into mtr
-        buses = await implementMTR(buses);
+        // buses = await implementMTR(buses);
         return buses;
     }
     catch (err) {
@@ -181,7 +181,6 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
 const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     const checkParenthesis = /\(.*$/; // Remove parenthesis due to different naming
     try {
-        // axiosRetry(axios, { retry: 3 });
         console.info(chalk.blue(`[bus] Now implementing NLB routes`))
         const nlbResponse = await axios('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list');
         const nlbRoutes = nlbResponse.data.routes
@@ -205,6 +204,7 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                         company: ['NLB'],
                         type: 'bus',
                         routeId: 'nlb' + route.routeId,
+                        altId: route.routeId,
                         routeNo: route.routeNo,
                         serviceMode: 'S',
                         specialType: 0,
@@ -221,7 +221,7 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                         stops: []
                     }
                     // Pull stops of specific route from NLB API
-                    const { data: newRouteStops } = await axios(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${route.routeId}`);
+                    const { data: newRouteStops } = await axios(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${route.altId}`);
                     for (let i = 0; i < newRouteStops.stops.length; i++) {
                         const newStop: BusStop = {
                             nameTC: newRouteStops.stops[i].stopName_c,
@@ -237,6 +237,25 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                 }
             }
         }
+        // Supplement stop ids from NLB buses
+        const NLBBuses = buses.filter(route => route.company.includes('NLB'));
+        console.log(NLBBuses.length)
+        const stopReq = NLBBuses.map(route => axios(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${route.altId}`));
+        let stopData = await axios.all(stopReq);
+        for (let i = 0; i < NLBBuses.length; i++) {
+            let targetStops = NLBBuses[i].stops
+            if (stopData[i].data.stops.length == 0) {
+                console.log(`${NLBBuses[i].routeNo} with id ${NLBBuses[i].altId} not found`)
+                continue
+            }
+            for (let j = 0; j < targetStops.length; j++) {
+                if (stopData[i].data.stops[j]) {
+                    targetStops[j].altId = stopData[i].data.stops[j].stopId
+                } else {
+                    // console.log(`${NLBBuses[i].routeNo} stop ${j} not found`)
+                }
+            }
+        }
         return buses
     } catch (err) {
         console.error(chalk.red(`[bus] Error while implementing NLB API: ${err}`));
@@ -245,7 +264,7 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
 }
 
 const implementMTR = async (buses: BusRoute[]): Promise<BusRoute[]> => {
-    try{
+    try {
         console.info(chalk.blue('[bus] Now implementing MTR bus routes'))
         const { data: mtrBusResponse } = await axios('https://opendata.mtr.com.hk/data/mtr_bus_stops.csv')
         const mtrBusData: any[] = papa.parse(mtrBusResponse, PAPACONFIG).data;
@@ -271,7 +290,7 @@ const implementMTR = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             }
         }
         return buses;
-    } catch(err){
+    } catch (err) {
         console.error(chalk.red(`[bus] Error while implementing MTR buses API: ${err}`));
         return buses
     }
