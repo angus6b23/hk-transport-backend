@@ -29,6 +29,9 @@ const fetchBuses = async () => {
         */
         let buses: BusRoute[] = busesObj.reduce(function (buses: BusRoute[], item: any) {
             //reduce(function (accumulator, currentValue) { ... }, initialValue)
+            if (item.company == 'NLB' || item.company == 'LRTFeeder'){ //NLB and LRTFeeder buses will be implemented later
+                return buses                
+            }
             const newStop = createStop<BusStop>(item);
             const checkIndex = buses.findIndex(bus => bus.routeId == item.properties.routeId && bus.direction == item.properties.routeSeq); //Check if route of current stop is stored
             if (checkIndex == -1) { //Create route if not found
@@ -177,7 +180,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     // await fs.promises.writeFile('./dev/ctb.json', JSON.stringify(ctbBuses))
     return buses
 }
-
+/*
 const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     const checkParenthesis = /\(.*$/; // Remove parenthesis due to different naming
     try {
@@ -259,6 +262,59 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         return buses
     } catch (err) {
         console.error(chalk.red(`[bus] Error while implementing NLB API: ${err}`));
+        return buses
+    }
+}
+*/ 
+
+const implementNLB = async(buses:BusRoute[]): Promise<BusRoute[]> => {
+    try{
+        let NLBBuses: BusRoute[] = [];
+        const originRegex = /^.*\>/;
+        const destRegex = /\>.*$/;
+        const {data: NLBRoutes} = await axios('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list');
+        for (let route of NLBRoutes.routes){
+            let sameRouteNoExist = NLBBuses.some(bus => bus.routeNo == route.routeNo)
+            let newRoute: BusRoute = {
+                type: 'bus',
+                company: ['NLB'],
+                routeId: route.routeId,
+                routeNo: route.routeNo,
+                direction: sameRouteNoExist ? 2 : 1,
+                specialType: 0,
+                serviceMode: (route.overnightRoute == 1) ? 'N' : (route.specialRoute == 1) ? 'T' : 'R',
+                originTC: route.routeName_c.match(originRegex)[0].replace(' >', ''),
+                originEN: route.routeName_e.match(originRegex)[0].replace(' >', ''),
+                destTC: route.routeName_c.match(destRegex)[0].replace('> ', ''),
+                destEN: route.routeName_e.match(destRegex)[0].replace('> ', ''),
+                infoLinkEN: `https://www.nlb.com.hk/route/detail/${route.routeId}`,
+                infoLinkTC: `https://www.nlb.com.hk/route/detail/${route.routeId}`,
+                starred: false,
+                stops: []
+            }
+            NLBBuses.push(newRoute);
+        }
+        const NLBStopsReq = NLBBuses.map(bus => axios(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${bus.routeId}`))
+        const NLBStopData = await axios.all(NLBStopsReq);
+        for (let i = 0; i < NLBStopData.length; i++){
+            let data = NLBStopData[i].data.stops;
+            let stops: BusStop[] = [];
+            for (let j = 0; j < data.length; j++){
+                let newStop: BusStop = {
+                    stopId: data[j].stopId,
+                    seq: j + 1,
+                    nameTC: data[j].stopName_c,
+                    nameEN: data[j].stopName_e,
+                    coord: [data[j].longitude, data[j].latitude]
+                }
+                stops.push(newStop);
+            }
+            NLBBuses[i].stops = stops
+        }
+        buses = [...buses, ...NLBBuses];
+        return buses
+    } catch (err){
+        console.error(chalk.red('[bus] Error while implementing NLB Buses: ' + err))
         return buses
     }
 }

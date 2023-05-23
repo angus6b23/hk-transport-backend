@@ -25,8 +25,8 @@ export interface Route {
     direction: number;
     serviceMode: string;
     specialType: number;
-    journeyTime: number;
-    fullFare: string;
+    journeyTime?: number;
+    fullFare?: string;
     originTC: string;
     originEN: string;
     destTC: ts.StopName;
