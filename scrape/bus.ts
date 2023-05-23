@@ -40,14 +40,14 @@ const fetchBuses = async () => {
             }
             return buses;
         }, []); //Initial value for reduce
-        // // Implement Special Routes, timetable and detailed map route from KMB API
-        // buses = await implementKMB(buses);
-        // // // Implement CTB buses with changes in stop and stopId for ETA
-        // buses = await implementCTB(buses);
+        // Implement Special Routes, timetable and detailed map route from KMB API
+        buses = await implementKMB(buses);
+        // // Implement CTB buses with changes in stop and stopId for ETA
+        buses = await implementCTB(buses);
         // // Implement altId and additional routes from NLB API
         buses = await implementNLB(buses);
         // Changes company of buses starting with K into mtr
-        // buses = await implementMTR(buses);
+        buses = await implementMTR(buses);
         return buses;
     }
     catch (err) {
