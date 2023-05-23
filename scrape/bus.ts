@@ -269,6 +269,7 @@ const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
 
 const implementNLB = async(buses:BusRoute[]): Promise<BusRoute[]> => {
     try{
+        console.log(chalk.blue('[bus] Now implementing NLB routes'))
         let NLBBuses: BusRoute[] = [];
         const originRegex = /^.*\>/;
         const destRegex = /\>.*$/;
