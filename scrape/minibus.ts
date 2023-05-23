@@ -79,7 +79,7 @@ const getStopCoords = async (minibuses: MinibusRoute[]) => {
 			}
 		}
 		const allReq = Array.from(stopIdList).map(async(id) => {
-			await sleep(200);
+			await sleep(400);
 			return axios.get(`https://data.etagmb.gov.hk/stop/${id}`);
 		});
 		const allRes = await axios.all(allReq);
