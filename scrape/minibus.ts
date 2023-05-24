@@ -29,6 +29,9 @@ const fetchMinibus = async () => {
 
 		// Get all stops of minibuses
 		minibuses = await getRouteStops(minibuses);
+		// Sleep for 120 seconds to prevent 429 Too many request
+		console.info(chalk.blue('[minibus] Sleeping for 2 minutes to prevent too many request to server'))
+		await sleep(120 * 10000)
 		// Get all stop coords
 		minibuses = await getStopCoords(minibuses)
 		return minibuses
