@@ -29,9 +29,6 @@ const fetchMinibus = async () => {
 
 		// Get all stops of minibuses
 		minibuses = await getRouteStops(minibuses);
-		// Sleep for 120 seconds to prevent 429 Too many request
-		console.info(chalk.blue('[minibus] Sleeping for 2 minutes to prevent too many request to server'))
-		await sleep(120 * 1000)
 		// Get all stop coords
 		minibuses = await getStopCoords(minibuses)
 		return minibuses
@@ -81,8 +78,12 @@ const getStopCoords = async (minibuses: MinibusRoute[]) => {
 				stopIdList.add(stop.stopId)
 			}
 		}
+		let batchSize = 0
 		const allReq = Array.from(stopIdList).map(async(id) => {
-			await sleep(400);
+			if (batchSize % 10 == 0){ //Try to wait for certain period for every 10 request
+				await sleep(3 * 1000)
+			}
+			batchSize++
 			return axios.get(`https://data.etagmb.gov.hk/stop/${id}`);
 		});
 		const allRes = await axios.all(allReq);
