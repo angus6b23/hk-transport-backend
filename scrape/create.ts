@@ -116,7 +116,7 @@ const createLRRoute = (item: any): MTRRoute => {
 
 const createMTRStop = (item: any): MTRStop => {
     return {
-        stopId: item['Station ID'],
+        stopId: (item['Station ID']) ? item['Station ID']: item['Stop ID'],
         seq: Number(item['Sequence']),
         nameTC: item['Chinese Name'],
         nameEN: item['English Name'],
