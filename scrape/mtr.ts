@@ -21,7 +21,8 @@ const fetchMTR = async () => {
         let mtrData = papa.parse(mtrCSV, PAPACONFIG).data;
         let mtr: MTRRoute[] = mtrData.reduce(function (mtr: MTRRoute[], item: any){
             const newStop: MTRStop = createMTRStop(item);
-            const direction = (item['Direction'] == 'DT') ? 1 : 2;
+            const directionString = item['Direction'];
+            const direction = (directionString == 'DT') ? 1 : (directionString == 'UT') ? 2 : directionString.includes('DT') ? 3 : directionString.includes('UT') ? 4 : undefined;
             const checkIndex = mtr.findIndex(route => route.direction == direction && route.routeId == item['Line Code']);
             if (checkIndex !== -1){
                 mtr[checkIndex].stops.push(newStop)

@@ -96,7 +96,7 @@ const createMTRRoute = (item: any): MTRRoute => {
         routeNameTC: getMTRRouteNameTC(item['Line Code']),
         routeNameEN: getMTRRouteNameEN(item['Line Code']),
         color: getMTRColor(item['Line Code']),
-        direction: (item['Direction'] === 'DT' ? 1 : 2),
+        direction: (item['Direction'] == 'DT') ? 1 : (item['Direction'] == 'UT') ? 2 : item['Direction'].includes('DT') ? 3 : item['Direction'].includes('UT') ? 4 : 5,
         stops: []
     }
     return newMTRRoute
