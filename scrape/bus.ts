@@ -174,7 +174,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             let firstStopReq = await axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${idRes[0].stop}`);
             let firstStopName = firstStopReq.data.data.name_en.slice(0,5).toLowerCase();
             if (mixedBuses[i].stops[0].nameEN.toLowerCase().includes(firstStopName)){ //Simply populate altId if the name of first stop matches
-                console.log(chalk.grey(`[bus] Successfully find bus ${idRes[0].route}`));
+                // console.log(chalk.grey(`[bus] Successfully find bus ${idRes[0].route}`));
                 for (let j = 0; j < idRes.length; j++){
                     if (mixedBuses[i].stops[j]){
                         mixedBuses[i].stops[j].altId = idRes[j].stop
@@ -184,7 +184,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                 // otherwise, find another route with same routen no and matching first stop
                 let findIndex = mixedBuses.findIndex(bus => bus.routeNo == idRes[0].route && bus.stops[0].nameEN.toLowerCase().includes(firstStopName));
                 if (findIndex != -1){
-                    console.log(chalk.grey(`[bus] Using alternative route for ${idRes[0].route}`));
+                    // console.log(chalk.grey(`[bus] Using alternative route for ${idRes[0].route}`));
                     for (let j = 0; j < idRes.length; j++){
                         if (mixedBuses[findIndex].stops[j]){
                             mixedBuses[findIndex].stops[j].altId = idRes[j].stop
