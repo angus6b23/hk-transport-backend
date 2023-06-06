@@ -1,11 +1,12 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry'
+import axiosThrottle from 'axios-request-throttle'
 import chalk from 'chalk';
-import sleep from './sleep';
 import { MinibusRoute, Stop } from '../typescript/interfaces';
 import { createStop, createRoute } from './create'
 
 axiosRetry(axios, { retries: 3 });
+axiosThrottle.use(axios, { requestsPerSecond: 10 });
 
 const fetchMinibus = async () => {
 	console.info(chalk.blue(`[minibus] Start fetching minibuses`));
@@ -79,14 +80,17 @@ const getStopCoords = async (minibuses: MinibusRoute[]) => {
 			}
 		}
 		let batchSize = 0
-		const allReq = Array.from(stopIdList).map(async(id) => {
-			if (batchSize % 10 == 0){ //Try to wait for certain period for every 10 request
-				await sleep(3 * 1000)
-			}
-			batchSize++
-			return axios.get(`https://data.etagmb.gov.hk/stop/${id}`);
-		});
-		const allRes = await axios.all(allReq);
+		/*
+			 const allReq = Array.from(stopIdList).map(async(id) => {
+			 if (batchSize % 3 == 0){ //Try to wait for certain period for every 10 request
+			 await sleep(1 * 1000)
+			 }
+			 batchSize++
+			 return axios.get(`https://data.etagmb.gov.hk/stop/${id}`);
+			 });
+		 */
+		const allReq = Array.from(stopIdList).map(id => axios.get(`https://data.etagmb.gov.hk/stop/${id}`));
+			const allRes = await axios.all(allReq);
 		for (const res of allRes) {
 			const id = res.request.path.replace('/stop/', '');
 			if (res.data.data.coordinates){

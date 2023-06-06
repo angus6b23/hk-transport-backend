@@ -1,5 +1,6 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry'
+import axiosThrottle from 'axios-request-throttle'
 import chalk from 'chalk';
 import papa from 'papaparse';
 import sleep from './sleep'
@@ -112,10 +113,7 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
 }
 
 const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
-    const warningCount = {
-        targetWarn: 0,
-        routeWarn: 0
-    }
+    axiosThrottle.use(axios, { requestsPerSecond: 10 });
     const ctbBuses = buses.filter(bus => bus.company.length == 1 && (bus.company.includes('CTB') || bus.company.includes('NWFB')));
     console.info(chalk.blue(`[bus] Now implementing CTB routes`))
     try {
