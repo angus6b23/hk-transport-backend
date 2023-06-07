@@ -171,13 +171,11 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         const mixedBusIdRes = await axios.all(mixedBusIdReq)
         for (let i = 0; i < mixedBusIdRes.length; i++){
             let idRes = mixedBusIdRes[i].data.data
-            let directionMatch = mixedBusIdRes[i] ? mixedBusIdRes[i].config?.url?.match(/\d+$/): [];
-            let direction = (directionMatch && directionMatch.length > 0) ? directionMatch[0] : undefined;
             let firstStopReq = await axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${idRes[0].stop}`);
             let firstStopName = firstStopReq.data.data.name_en.slice(0,5).toLowerCase();
             if (mixedBuses[i].stops[0].nameEN.toLowerCase().includes(firstStopName)){ //Simply populate altId if the name of first stop matches
                 // console.log(chalk.grey(`[bus] Successfully find bus ${idRes[0].route}`));
-                mixedBuses[i].CTBDirection = (direction == 'outbound') ? 'O' : 'I';
+                mixedBuses[i].CTBDirection = (mixedBuses[i].direction == 1) ? 'O' : 'I';
                 for (let j = 0; j < idRes.length; j++){
                     if (mixedBuses[i].stops[j]){
                         mixedBuses[i].stops[j].altId = idRes[j].stop
@@ -188,7 +186,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                 let findIndex = mixedBuses.findIndex(bus => bus.routeNo == idRes[0].route && bus.stops[0].nameEN.toLowerCase().includes(firstStopName));
                 if (findIndex != -1){
                     // console.log(chalk.grey(`[bus] Using alternative route for ${idRes[0].route}`));
-                    mixedBuses[i].CTBDirection = (direction == 'outbound') ? 'I' : 'O';
+                    mixedBuses[findIndex].CTBDirection = (mixedBuses[findIndex].direction == 1) ? 'I' : 'O';
                     for (let j = 0; j < idRes.length; j++){
                         if (mixedBuses[findIndex].stops[j]){
                             mixedBuses[findIndex].stops[j].altId = idRes[j].stop
