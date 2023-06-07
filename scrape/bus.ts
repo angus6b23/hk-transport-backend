@@ -171,7 +171,8 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         const mixedBusIdRes = await axios.all(mixedBusIdReq)
         for (let i = 0; i < mixedBusIdRes.length; i++){
             let idRes = mixedBusIdRes[i].data.data
-            let direction = mixedBusIdRes[i] ? mixedBusIdRes[i].config.url.match(/\d+$/)[0] : undefined;
+            let directionMatch = mixedBusIdRes[i] ? mixedBusIdRes[i].config?.url?.match(/\d+$/): [];
+            let direction = (directionMatch && directionMatch.length > 0) ? directionMatch[0] : undefined;
             let firstStopReq = await axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${idRes[0].stop}`);
             let firstStopName = firstStopReq.data.data.name_en.slice(0,5).toLowerCase();
             if (mixedBuses[i].stops[0].nameEN.toLowerCase().includes(firstStopName)){ //Simply populate altId if the name of first stop matches
