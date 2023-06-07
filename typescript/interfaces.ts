@@ -39,6 +39,7 @@ export interface Route {
 export interface BusRoute extends Route {
     company: string[];
     altId?: string | number;
+    CTBDirection?: string | number;
     stops: BusStop[];
     timetable?: Timetable[]
 }

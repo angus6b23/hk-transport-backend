@@ -127,7 +127,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             return axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/route-stop/${company}/${ctbBus.routeNo}/${direction}`)
         })
         // Fetch all routes,
-        const ctbIdRes = (await axios.all(ctbIdReq)).map(res => res.data);
+        const ctbIdRes = (await axios.all(ctbIdReq)).map((res: any) => res.data);
         // then map all stop ids to a single Set
         const stopSet = new Set();
         for (let res of ctbIdRes) { //Loop through all response
@@ -145,7 +145,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             let targetRoute = ctbIdRes[i].data;
             // Then loop through all stops of corresponding route
             for (let j = 0; j < targetRoute.length; j++) {
-                const targetStop = stopRes.find(axios => axios.config.url == `https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${targetRoute[j].stop}`);
+                const targetStop = stopRes.find((axios: any) => axios.config.url == `https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${targetRoute[j].stop}`);
                 const newStop: BusStop = {
                     seq: j + 1,
                     stopId: targetStop?.data.data.stop,
@@ -171,10 +171,12 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         const mixedBusIdRes = await axios.all(mixedBusIdReq)
         for (let i = 0; i < mixedBusIdRes.length; i++){
             let idRes = mixedBusIdRes[i].data.data
+            let direction = mixedBusIdRes[i] ? mixedBusIdRes[i].config.url.match(/\d+$/)[0] : undefined;
             let firstStopReq = await axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${idRes[0].stop}`);
             let firstStopName = firstStopReq.data.data.name_en.slice(0,5).toLowerCase();
             if (mixedBuses[i].stops[0].nameEN.toLowerCase().includes(firstStopName)){ //Simply populate altId if the name of first stop matches
                 // console.log(chalk.grey(`[bus] Successfully find bus ${idRes[0].route}`));
+                mixedBuses[i].CTBDirection = (direction == 'outbound') ? 'O' : 'I';
                 for (let j = 0; j < idRes.length; j++){
                     if (mixedBuses[i].stops[j]){
                         mixedBuses[i].stops[j].altId = idRes[j].stop
@@ -185,6 +187,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                 let findIndex = mixedBuses.findIndex(bus => bus.routeNo == idRes[0].route && bus.stops[0].nameEN.toLowerCase().includes(firstStopName));
                 if (findIndex != -1){
                     // console.log(chalk.grey(`[bus] Using alternative route for ${idRes[0].route}`));
+                    mixedBuses[i].CTBDirection = (direction == 'outbound') ? 'I' : 'O';
                     for (let j = 0; j < idRes.length; j++){
                         if (mixedBuses[findIndex].stops[j]){
                             mixedBuses[findIndex].stops[j].altId = idRes[j].stop
@@ -202,92 +205,6 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     // await fs.promises.writeFile('./dev/ctb.json', JSON.stringify(ctbBuses))
     return buses
 }
-/*
-   const implementNLB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
-   const checkParenthesis = /\(.*$/; // Remove parenthesis due to different naming
-   try {
-   console.info(chalk.blue(`[bus] Now implementing NLB routes`))
-   const nlbResponse = await axios('https://rt.data.gov.hk/v2/transport/nlb/route.php?action=list');
-   const nlbRoutes = nlbResponse.data.routes
-   const originRegex = /^.*\>/;
-   const destRegex = /\>.*$/;
-   for (const route of nlbRoutes) { //Loop for nlb Routes and try to find route with same routeNo, origin and destination
-                                    // Route name of nlb is named as `${origin} > ${dest}`
-                                    const origin = route.routeName_e.match(originRegex)[0].replace(' >', '').replace(checkParenthesis, '');
-                                    const dest = route.routeName_e.match(destRegex)[0].replace('> ', '').replace(checkParenthesis, '');
-                                    const checkIndex = buses.findIndex(bus => bus.company.includes('NLB') && bus.routeNo == route.routeNo && bus.destEN.replaceAll(' ', '').includes(dest.replaceAll(' ', '')) && bus.originEN.replaceAll(' ', '').includes(origin.replaceAll(' ', '')));
-                                    if (checkIndex != -1) {
-                                    buses[checkIndex].altId = route.routeId;
-                                    } else {
-// If not found, try to reduce the restraints to bind altId
-const checkIndex = buses.findIndex(bus => bus.routeNo === route.routeNo && bus.company.includes('NLB'));
-if (checkIndex != -1) {
-buses[checkIndex].altId = route.routeId;
-} else {
-// Create NLB route if not found
-const newNlbRoute: BusRoute = {
-company: ['NLB'],
-type: 'bus',
-routeId: 'nlb' + route.routeId,
-altId: route.routeId,
-routeNo: route.routeNo,
-serviceMode: 'S',
-specialType: 0,
-infoLinkEN: 'https://www.nlb.com.hk/route?q=' + route.routeNo,
-infoLinkTC: 'https://www.nlb.com.hk/route?q=' + route.routeNo,
-fullFare: '0',
-direction: 1,
-journeyTime: 0,
-destTC: route.routeName_c.match(destRegex)[0].replace('> ', ''),
-destEN: route.routeName_e.match(destRegex)[0].replace('> ', ''),
-originTC: route.routeName_c.match(originRegex)[0].replace(' >', ''),
-originEN: route.routeName_e.match(originRegex)[0].replace(' >', ''),
-starred: false,
-stops: []
-}
-// Pull stops of specific route from NLB API
-const { data: newRouteStops } = await axios(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${route.altId}`);
-for (let i = 0; i < newRouteStops.stops.length; i++) {
-const newStop: BusStop = {
-nameTC: newRouteStops.stops[i].stopName_c,
-nameEN: newRouteStops.stops[i].stopName_e,
-stopId: newRouteStops.stops[i].stopId,
-seq: i + 1,
-coord: [newRouteStops.stops[i].longitude, newRouteStops.stops[i].latitude],
-etas: []
-}
-newNlbRoute.stops.push(newStop);
-}
-buses.push(newNlbRoute);
-}
-}
-}
-// Supplement stop ids from NLB buses
-const NLBBuses = buses.filter(route => route.company.includes('NLB'));
-console.log(NLBBuses.length)
-const stopReq = NLBBuses.map(route => axios(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${route.altId}`));
-let stopData = await axios.all(stopReq);
-for (let i = 0; i < NLBBuses.length; i++) {
-let targetStops = NLBBuses[i].stops
-if (stopData[i].data.stops.length == 0) {
-console.log(`${NLBBuses[i].routeNo} with id ${NLBBuses[i].altId} not found`)
-continue
-}
-for (let j = 0; j < targetStops.length; j++) {
-    if (stopData[i].data.stops[j]) {
-        targetStops[j].altId = stopData[i].data.stops[j].stopId
-    } else {
-        // console.log(`${NLBBuses[i].routeNo} stop ${j} not found`)
-    }
-}
-}
-return buses
-} catch (err) {
-    console.error(chalk.red(`[bus] Error while implementing NLB API: ${err}`));
-    return buses
-}
-}
-*/ 
 
 const implementNLB = async(buses:BusRoute[]): Promise<BusRoute[]> => {
     try{
@@ -342,40 +259,6 @@ const implementNLB = async(buses:BusRoute[]): Promise<BusRoute[]> => {
         return buses
     }
 }
-/*
-   const implementMTR = async (buses: BusRoute[]): Promise<BusRoute[]> => {
-   try {
-   console.info(chalk.blue('[bus] Now implementing MTR bus routes'))
-   const { data: mtrBusResponse } = await axios('https://opendata.mtr.com.hk/data/mtr_bus_stops.csv')
-   const mtrBusData: any[] = papa.parse(mtrBusResponse, PAPACONFIG).data;
-   let mtrBuses: BusRoute[] = buses.filter(bus => (bus.routeNo.indexOf('K') == 0 && bus.routeNo.length <= 5) || bus.company.includes('LRTFeeder'))
-   mtrBuses.forEach(route => {
-   route.company = ['LRTFeeder']
-   })
-   for (let item of mtrBusData) {
-   let { ROUTE_ID: routeNo, DIRECTION: direction, STATION_ID: stationId, STATION_SEQNO: seq, STATION_LATITUDE: latitude, STATION_LONGITUDE: longitude, STATION_NAME_CHI: nameTC, STATION_NAME_ENG: nameEN } = item;
-   direction = (direction == 'I') ? 1 : 2;
-   let index = mtrBuses.findIndex(route => route.routeNo == routeNo && route.direction == direction);
-   if (index == -1) {
-   index = mtrBuses.findIndex(route => route.routeNo == routeNo && route.direction == 1)
-   }
-   let targetBus = mtrBuses[index];
-   targetBus.stops[seq - 1] = {
-seq: seq,
-coord: [longitude, latitude],
-stopId: stationId,
-nameTC: nameTC,
-nameEN: nameEN,
-etas: []
-}
-}
-return buses;
-} catch (err) {
-console.error(chalk.red(`[bus] Error while implementing MTR buses API: ${err}`));
-return buses
-}
-}
- */
 
 const implementMTR = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     try {
