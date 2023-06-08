@@ -8,9 +8,9 @@ import { BusRoute, BusStop, Timetable } from '../typescript/interfaces';
 import { createStop, createRoute } from './create'
 // For Dev purpose only
 /*
-import busesResponse from '../dev/JSON_BUS.json';
-import fs from 'fs'
-*/
+   import busesResponse from '../dev/JSON_BUS.json';
+   import fs from 'fs'
+ */
 
 const PAPACONFIG = {
     header: true,
@@ -25,9 +25,9 @@ const fetchBuses = async () => {
         const busesObj = busesResponse.data.features
         // For Dev purpose only
         /*
-        const busesResponseClone: any = busesResponse
-        const busesObj = busesResponseClone.features;
-        */
+           const busesResponseClone: any = busesResponse
+           const busesObj = busesResponseClone.features;
+         */
         let buses: BusRoute[] = busesObj.reduce(function (buses: BusRoute[], item: any) {
             //reduce(function (accumulator, currentValue) { ... }, initialValue)
             if (item.properties.companyCode == 'NLB' || item.properties.companyCode == 'LRTFeeder' || item.properties.routeNameC.indexOf('K') == 0){ //NLB and LRTFeeder buses will be implemented later
@@ -64,48 +64,48 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     try {
         console.info(chalk.blue(`[bus] Now implementing KMB routes`));
         const checkParenthesis = /\(.*$/; // Remove parenthesis due to different naming
-        // Download all Kmb routes
-        // Bind KMB / LMB specialType into existing routes
-        const kmbResponse = await axios('https://data.etabus.gov.hk/v1/transport/kmb/route/');
-        const { data: kmbJson } = kmbResponse;
-        const kmbFiltered = kmbJson.data.filter((kmb: any) => kmb.serviceType != '1');
-        // Search for kmb service mode != 1
-        for (const specialRoute of kmbFiltered) {
-            const checkIndex = buses.findIndex(bus => bus.serviceMode != 'R' && bus.routeNo === specialRoute.route && bus.destEN.replace(checkParenthesis, '').replaceAll(' ', '') == specialRoute.dest_en.replace(checkParenthesis, '').replaceAll(' ', ''));
-            if (checkIndex != -1) {
-                buses[checkIndex].specialType = specialRoute.service_type;
-            }
-        }
-        // Try to bind timetable and detailed route
-        const kmbBuses = buses.filter(bus => bus.company.includes('KMB') || bus.company.includes('LWB'));
-        for (let kmbBus of kmbBuses) {
-            const timetableResponse = await axios(`https://search.kmb.hk/KMBWebSite/Function/FunctionRequest.ashx?action=getschedule&route=${kmbBus.routeNo}&bound=${kmbBus.direction}`);
-            // console.log(chalk.grey(`Fetching ${kmbBus.routeNo}: ${kmbBus.originTC} > ${kmbBus.destTC}`))
-            const specialType = (kmbBus.specialType == 0) ? 1 : kmbBus.specialType;
-            const timetable = timetableResponse.data.data[`0${specialType}`];
-            const newTimeTable: Timetable[] = [];
-            if (timetable) {
-                for (const slot of timetable) {
-                    const checkIndex = newTimeTable.findIndex(nslot => nslot.title === slot.DayType.replaceAll(' ', ''));
-                    if (checkIndex === -1 && slot.BoundText1 && slot.BoundTime1) { // Only add to timetable if all fields are satisfied
-                        newTimeTable.push({
-                            title: slot.DayType.replaceAll(' ', ''),
-                            details: [{
-                                period: slot.BoundText1,
-                                freq: slot.BoundTime1
-                            }]
-                        })
-                    } else if (slot.BoundText1 && slot.BoundTime1) {
-                        newTimeTable[checkIndex].details.push({
-                            period: slot.BoundText1,
-                            freq: slot.BoundTime1
-                        })
-                    }
-                }
-                kmbBus.timetable = newTimeTable;
-            }
-        }
-        return buses
+                                    // Download all Kmb routes
+                                    // Bind KMB / LMB specialType into existing routes
+                                    const kmbResponse = await axios('https://data.etabus.gov.hk/v1/transport/kmb/route/');
+                                    const { data: kmbJson } = kmbResponse;
+                                    const kmbFiltered = kmbJson.data.filter((kmb: any) => kmb.serviceType != '1');
+                                    // Search for kmb service mode != 1
+                                    for (const specialRoute of kmbFiltered) {
+                                        const checkIndex = buses.findIndex(bus => bus.serviceMode != 'R' && bus.routeNo === specialRoute.route && bus.destEN.replace(checkParenthesis, '').replaceAll(' ', '') == specialRoute.dest_en.replace(checkParenthesis, '').replaceAll(' ', ''));
+                                        if (checkIndex != -1) {
+                                            buses[checkIndex].specialType = specialRoute.service_type;
+                                        }
+                                    }
+                                    // Try to bind timetable and detailed route
+                                    const kmbBuses = buses.filter(bus => bus.company.includes('KMB') || bus.company.includes('LWB'));
+                                    for (let kmbBus of kmbBuses) {
+                                        const timetableResponse = await axios(`https://search.kmb.hk/KMBWebSite/Function/FunctionRequest.ashx?action=getschedule&route=${kmbBus.routeNo}&bound=${kmbBus.direction}`);
+                                            // console.log(chalk.grey(`Fetching ${kmbBus.routeNo}: ${kmbBus.originTC} > ${kmbBus.destTC}`))
+                                            const specialType = (kmbBus.specialType == 0) ? 1 : kmbBus.specialType;
+                                        const timetable = timetableResponse.data.data[`0${specialType}`];
+                                        const newTimeTable: Timetable[] = [];
+                                        if (timetable) {
+                                            for (const slot of timetable) {
+                                                const checkIndex = newTimeTable.findIndex(nslot => nslot.title === slot.DayType.replaceAll(' ', ''));
+                                                if (checkIndex === -1 && slot.BoundText1 && slot.BoundTime1) { // Only add to timetable if all fields are satisfied
+                                                    newTimeTable.push({
+                                                        title: slot.DayType.replaceAll(' ', ''),
+                                                        details: [{
+                                                            period: slot.BoundText1,
+                                                            freq: slot.BoundTime1
+                                                        }]
+                                                    })
+                                                } else if (slot.BoundText1 && slot.BoundTime1) {
+                                                    newTimeTable[checkIndex].details.push({
+                                                        period: slot.BoundText1,
+                                                        freq: slot.BoundTime1
+                                                    })
+                                                }
+                                            }
+                                            kmbBus.timetable = newTimeTable;
+                                        }
+                                    }
+                                    return buses
     } catch (err) {
         console.error(chalk.red(`[bus] Error while implementing KMB API: ${err}`));
         return buses
@@ -121,82 +121,88 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         // Create Array for fetching all route data
         const ctbIdReq = ctbBuses.map(async (ctbBus) => {
             const company =
-               (ctbBus.company.includes('CTB')) ? 'CTB' :
-               (ctbBus.company.includes('NWFB')) ? 'NWFB' : null;
+                (ctbBus.company.includes('CTB')) ? 'CTB' :
+                (ctbBus.company.includes('NWFB')) ? 'NWFB' : null;
             const direction = (ctbBus.direction == 1) ? 'outbound' : 'inbound'; //Direction 1 = outbound, 2 = inbound
             return axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/route-stop/${company}/${ctbBus.routeNo}/${direction}`)
         })
-        // Fetch all routes,
-        const ctbIdRes = (await axios.all(ctbIdReq)).map((res: any) => res.data);
-        // then map all stop ids to a single Set
-        const stopSet = new Set();
-        for (let res of ctbIdRes) { //Loop through all response
-            for (let id of res.data) { //Loop through all stops in single response
-                stopSet.add(id.stop);
-            }
-        }
-        console.info(chalk.blue(`[bus] Now getting all CTB and NWFB stop ids`))
-        // Create array for all request for stops
-        const stopReq = Array.from(stopSet).map(id => axios.get(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${id}`))
-        const stopRes = await axios.all(stopReq);
-        // Loop through all routes from response,
-        for (let i = 0; i < ctbIdRes.length; i++) {
-            let newStopList: BusStop[] = [];
-            let targetRoute = ctbIdRes[i].data;
-            // Then loop through all stops of corresponding route
-            for (let j = 0; j < targetRoute.length; j++) {
-                const targetStop = stopRes.find((axios: any) => axios.config.url == `https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${targetRoute[j].stop}`);
-                const newStop: BusStop = {
-                    seq: j + 1,
-                    stopId: targetStop?.data.data.stop,
-                    nameEN: targetStop?.data.data.name_en,
-                    nameTC: targetStop?.data.data.name_tc,
-                    coord: [targetStop?.data.data.long, targetStop?.data.data.lat],
-                    etas: []
+            // Fetch all routes,
+            const ctbIdRes = (await axios.all(ctbIdReq)).map((res: any) => res.data);
+            // then map all stop ids to a single Set
+            const stopSet = new Set();
+            for (let res of ctbIdRes) { //Loop through all response
+                for (let id of res.data) { //Loop through all stops in single response
+                    stopSet.add(id.stop);
                 }
-                newStopList.push(newStop);
             }
-            ctbBuses[i].stops = newStopList
-        }
-        // Grab all Mixed bus data
-        // Even KMB and CTB / NWFB operate the same route, the direction use different internally
-        console.info(chalk.blue(`[bus] Now fetching buses with several companies`));
-        const mixedBusIdReq = mixedBuses.map(bus => {
-            const company =
-                (bus.company.includes('CTB')) ? 'CTB' :
-                (bus.company.includes('NWFB')) ? 'NWFB' : null;
-            const direction = (bus.direction == 1) ? 'outbound' : 'inbound'; //Direction 1 = outbound, 2 = inbound
-            return axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/route-stop/${company}/${bus.routeNo}/${direction}`)
-        });
-        const mixedBusIdRes = await axios.all(mixedBusIdReq)
-        for (let i = 0; i < mixedBusIdRes.length; i++){
-            let idRes = mixedBusIdRes[i].data.data
-            let firstStopReq = await axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${idRes[0].stop}`);
-            let firstStopName = firstStopReq.data.data.name_en.slice(0,5).toLowerCase();
-            if (mixedBuses[i].stops[0].nameEN.toLowerCase().includes(firstStopName)){ //Simply populate altId if the name of first stop matches
-                // console.log(chalk.grey(`[bus] Successfully find bus ${idRes[0].route}`));
-                mixedBuses[i].CTBDirection = (mixedBuses[i].direction == 1) ? 'O' : 'I';
-                for (let j = 0; j < idRes.length; j++){
-                    if (mixedBuses[i].stops[j]){
-                        mixedBuses[i].stops[j].altId = idRes[j].stop
+            console.info(chalk.blue(`[bus] Now getting all CTB and NWFB stop ids`))
+            // Create array for all request for stops
+            const stopReq = Array.from(stopSet).map(id => axios.get(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${id}`))
+                const stopRes = await axios.all(stopReq);
+            // Loop through all routes from response,
+            for (let i = 0; i < ctbIdRes.length; i++) {
+                let newStopList: BusStop[] = [];
+                let targetRoute = ctbIdRes[i].data;
+                // Then loop through all stops of corresponding route
+                for (let j = 0; j < targetRoute.length; j++) {
+                    const targetStop = stopRes.find((axios: any) => axios.config.url == `https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${targetRoute[j].stop}`);
+                        const newStop: BusStop = {
+                        seq: j + 1,
+                        stopId: targetStop?.data.data.stop,
+                        nameEN: targetStop?.data.data.name_en,
+                        nameTC: targetStop?.data.data.name_tc,
+                        coord: [targetStop?.data.data.long, targetStop?.data.data.lat],
+                        etas: []
                     }
+                    newStopList.push(newStop);
                 }
-            } else {
-                // otherwise, find another route with same routen no and matching first stop
-                let findIndex = mixedBuses.findIndex(bus => bus.routeNo == idRes[0].route && bus.stops[0].nameEN.toLowerCase().includes(firstStopName));
-                if (findIndex != -1){
-                    // console.log(chalk.grey(`[bus] Using alternative route for ${idRes[0].route}`));
-                    mixedBuses[findIndex].CTBDirection = (mixedBuses[findIndex].direction == 1) ? 'I' : 'O';
-                    for (let j = 0; j < idRes.length; j++){
-                        if (mixedBuses[findIndex].stops[j]){
-                            mixedBuses[findIndex].stops[j].altId = idRes[j].stop
+                ctbBuses[i].stops = newStopList
+            }
+            // Grab all Mixed bus data
+            // Even KMB and CTB / NWFB operate the same route, the direction use different internally
+            console.info(chalk.blue(`[bus] Now fetching buses with several companies`));
+            const mixedBusIdReq = mixedBuses.map(bus => {
+                const company =
+                    (bus.company.includes('CTB')) ? 'CTB' :
+                    (bus.company.includes('NWFB')) ? 'NWFB' : null;
+                const direction = (bus.direction == 1) ? 'outbound' : 'inbound'; //Direction 1 = outbound, 2 = inbound
+                return axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/route-stop/${company}/${bus.routeNo}/${direction}`)
+            });
+                const mixedBusIdRes = await axios.all(mixedBusIdReq)
+                for (let i = 0; i < mixedBusIdRes.length; i++){
+                    let idRes = mixedBusIdRes[i].data.data
+                    let firstStopReq = await axios(`https://rt.data.gov.hk/v1.1/transport/citybus-nwfb/stop/${idRes[0].stop}`);
+                        let firstStopName = firstStopReq.data.data.name_en.slice(0,5).toLowerCase();
+                    if (mixedBuses[i].stops[0].nameEN.toLowerCase().includes(firstStopName)){ //Simply populate altId if the name of first stop matches
+                        // console.log(chalk.grey(`[bus] Successfully find bus ${idRes[0].route}`));
+                        mixedBuses[i].CTBDirection = (mixedBuses[i].direction == 1) ? 'O' : 'I';
+                        for (let j = 0; j < idRes.length; j++){
+                            if (mixedBuses[i].stops[j]){
+                                mixedBuses[i].stops[j].altId = idRes[j].stop
+                            }
+                        }
+                    } else {
+                        // otherwise, find another route with same routen no and matching first stop
+                        let filtered = mixedBuses.filter(bus => bus.routeNo == idRes[0].route && bus.stops[0].nameEN.toLowerCase().includes(firstStopName)); 
+                        let findIndex
+                        if (filtered.length > 2){ // Prioritize filling buses with regular service mode if there are more than two routes fulfilling the criteria
+                            findIndex = mixedBuses.findIndex(bus => bus.serviceMode === 'R' && bus.routeNo == idRes[0].route && bus.stops[0].nameEN.toLowerCase().includes(firstStopName));
+                        } else {
+                            findIndex = mixedBuses.findIndex(bus => bus.routeNo == idRes[0].route && bus.stops[0].nameEN.toLowerCase().includes(firstStopName));
+                        }
+                        if (findIndex != -1){
+                            // console.log(chalk.grey(`[bus] Using alternative route for ${idRes[0].route}`));
+                            mixedBuses[findIndex].CTBDirection = (mixedBuses[findIndex].direction == 1) ? 'I' : 'O';
+                            for (let j = 0; j < idRes.length; j++){
+                                if (mixedBuses[findIndex].stops[j]){
+                                    mixedBuses[findIndex].stops[j].altId = idRes[j].stop
+                                }
+                            }
+                        } else {
+                            console.warn(chalk.yellow(`[bus] Unable to find bus for route ${idRes[0].route}`));
                         }
                     }
-                } else {
-                    console.warn(chalk.yellow(`[bus] Unable to find bus for route ${idRes[0].route}`));
                 }
-            }
-        }
     } catch (err) {
         console.error(chalk.red(`[bus] Error: Implementing CTB API - ${err}`))
         return buses
