@@ -58,6 +58,23 @@ const fetchBuses = async () => {
         console.error(chalk.red(`[bus] Error while scraping bus: ${err}`));
     }
 }
+const fixKMBEn = (string: string): string => {
+    let newString = string.toLowerCase()
+    let capital: boolean = true;
+    for (let i = 0; i < string.length; i++){
+        if (capital){
+            if (string[i] === '('){
+                continue;
+            }
+            capital = false;
+            newString = newString.substring(0, i) + newString[i].toUpperCase() + newString.substring(i + 1)
+        } else if (string[i] === ' ' || string[i] === '('){
+            capital = true
+        }
+    }
+    newString.replace('Bbi', 'BBI');
+    return newString
+}
 
 const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
     // Get service modes from kmb
@@ -103,6 +120,12 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                                                 }
                                             }
                                             kmbBus.timetable = newTimeTable;
+                                        }
+                                        // Fix KMB buses capiptalized station naming convention
+                                        kmbBus.originEN = fixKMBEn(kmbBus.originEN);
+                                        kmbBus.destEN = fixKMBEn(kmbBus.destEN);
+                                        for (let stop of kmbBus.stops){
+                                            stop.nameEN = fixKMBEn(stop.nameEN);
                                         }
                                     }
                                     return buses
