@@ -3,7 +3,6 @@ import axiosRetry from 'axios-retry'
 import axiosThrottle from 'axios-request-throttle'
 import chalk from 'chalk';
 import papa from 'papaparse';
-import sleep from './sleep'
 import { BusRoute, BusStop, Timetable } from '../typescript/interfaces';
 import { createStop, createRoute } from './create'
 // For Dev purpose only
@@ -300,7 +299,7 @@ const implementMTR = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             const index = mtrBuses.findIndex(bus => bus.routeNo == routeNo && bus.direction == direction)
             let newStop: BusStop = {
                 coord: [longitude, latitude],
-                seq: seq,
+                seq: parseInt(seq),
                 nameEN: nameEN,
                 nameTC: nameTC,
                 stopId: stopId,
@@ -322,8 +321,8 @@ const implementMTR = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                     destEN: '',
                     destTC: '',
                     infoLinkEN: `https://www.mtr.com.hk/en/customer/services/searchBusRouteDetails.php?routeID=${routeNo}`,
-                        infoLinkTC: `https://www.mtr.com.hk/ch/customer/services/searchBusRouteDetails.php?routeID=${routeNo}`,
-                        stops: [newStop],
+                    infoLinkTC: `https://www.mtr.com.hk/ch/customer/services/searchBusRouteDetails.php?routeID=${routeNo}`,
+                    stops: [newStop],
                     starred: false
                 }
                 mtrBuses.push(newRoute);
