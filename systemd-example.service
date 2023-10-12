@@ -1,0 +1,13 @@
+[Unit]
+Description = Backend for hk-transport
+After = network.target
+
+[Service]
+Type = simple
+User = userName
+WorkingDirectory = /path/to/hk-transport-backend/
+ExecStart = /usr/local/bin/yarn run start
+
+[Install]
+WantedBy = multi-user.target
+
