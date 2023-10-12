@@ -11,9 +11,8 @@ const corsOptions = {
 }
 
 const initServer = (config: Config) => {
-    // server.use(express.static('public'));
-    server.use(cors(corsOptions))
-    server.use('/', routes);
+    server.use(cors(config.server.cors))
+    server.use(config.server.basePath, routes);
     server.listen(config.server.port, () => {
         console.info(chalk.green(`[server] listening on port ${config.server.port}`))
     })

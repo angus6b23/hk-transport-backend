@@ -1,3 +1,4 @@
+import { CorsOptions } from 'cors';
 import * as ts from './types'
 
 // Response related interface
@@ -9,6 +10,8 @@ export interface genericResponse {
 export interface Config {
     server: {
         port: number;
+        cors: CorsOptions;
+        basePath: string;
     },
     scraper: {
         cron: string;
