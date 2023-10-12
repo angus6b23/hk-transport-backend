@@ -3,6 +3,6 @@ server:
   corsOrigin: '*'
 
 scraper:
-  cron: '0 3 * * *'
+  cron: '5 3 * * *'
   forceRebuild: 3
   chunkSize: 50

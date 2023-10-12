@@ -5,11 +5,6 @@ import chalk from 'chalk';
 import papa from 'papaparse';
 import { BusRoute, BusStop, Timetable } from '../typescript/interfaces';
 import { createStop, createRoute } from './create'
-// For Dev purpose only
-/*
-   import busesResponse from '../dev/JSON_BUS.json';
-   import fs from 'fs'
- */
 
 const PAPACONFIG = {
     header: true,
@@ -22,11 +17,6 @@ const fetchBuses = async () => {
     try {
         const busesResponse = await axios('https://static.data.gov.hk/td/routes-fares-geojson/JSON_BUS.json'); //Get all buses information from data.gov.hk
         const busesObj = busesResponse.data.features
-        // For Dev purpose only
-        /*
-           const busesResponseClone: any = busesResponse
-           const busesObj = busesResponseClone.features;
-         */
         let buses: BusRoute[] = busesObj.reduce(function (buses: BusRoute[], item: any) {
             //reduce(function (accumulator, currentValue) { ... }, initialValue)
             if (item.properties.companyCode == 'NLB' || item.properties.companyCode == 'LRTFeeder' || item.properties.routeNameC.indexOf('K') == 0){ //NLB and LRTFeeder buses will be implemented later

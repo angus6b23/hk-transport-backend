@@ -45,8 +45,6 @@ const createHashes = async () => {
         hash[key] = sha256(content);
     }
     await fs.promises.writeFile('./public/hash.json', JSON.stringify(hash), 'utf-8')
-
-
 }
 
 const chunk = (array: any[], chunkSize: number) => {
@@ -103,4 +101,5 @@ const createPromise = async (type: TransportType, chunkSize: number) => {
         }
     })
 }
+
 export { fetchAll, createHashes }

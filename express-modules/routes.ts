@@ -8,7 +8,10 @@ router.use(compression());
 router.use('/chunked', express.static('./public/chunked/'))
 
 router.get('/', (req, res) => {
-    res.status(200).send('test');
+    res.status(200).send({
+        status: 'success',
+        data: 'Please see https://github.com/angus6b23/hk-transport-backend for usage'
+    });
 })
 
 

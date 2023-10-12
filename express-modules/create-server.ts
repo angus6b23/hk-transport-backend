@@ -13,7 +13,7 @@ const corsOptions = {
 const initServer = (config: Config) => {
     // server.use(express.static('public'));
     server.use(cors(corsOptions))
-    server.use('/hk-transport', routes);
+    server.use('/', routes);
     server.listen(config.server.port, () => {
         console.info(chalk.green(`[server] listening on port ${config.server.port}`))
     })

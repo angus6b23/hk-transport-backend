@@ -4,7 +4,7 @@ import chalk from 'chalk'
 import { Config } from './typescript/interfaces';
 import cron from 'node-cron'
 
-import { fetchAll, createHashes } from './scrape/controller'
+import { fetchAll } from './scrape/controller'
 import initServer from "./express-modules/create-server";
 
 let config: Config
@@ -12,6 +12,7 @@ let config: Config
 
 fs.promises.readFile('./config.yaml', 'utf-8').then(async(data) => {
     config = yaml.parse(data);
+    // Create folder if hashes not found
     if (!fs.existsSync('./public/hash.json')){
         fs.mkdirSync('public');
         fs.mkdirSync('public/chunked')
@@ -19,8 +20,8 @@ fs.promises.readFile('./config.yaml', 'utf-8').then(async(data) => {
         await fetchAll(config)
     }
     initServer(config);
-    cron.schedule('5 3 * * *' , async ()=>{
-        console.log(chalk.grey('task run'));
+    cron.schedule(config.scraper.cron , async ()=>{
+        console.log(chalk.grey('[app] Cron job task run'));
         await fetchAll(config);
     })
 }).catch(err => {

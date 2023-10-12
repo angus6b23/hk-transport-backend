@@ -4,7 +4,6 @@ import chalk from 'chalk'
 import { TramRoute, Stop } from '../typescript/interfaces'
 import { createStop, createRoute } from './create'
 // For Dev purpose only
-// import busesResponse from '../dev/JSON_BUS.json';
 
 axiosRetry(axios, { retries: 3 });
 
