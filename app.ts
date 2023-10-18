@@ -19,6 +19,9 @@ fs.promises.readFile('./config.yaml', 'utf-8').then(async(data) => {
         console.info(chalk.yellow(`[app] Hashes not found, rebuilding chunks and hashses`))
         await fetchAll(config)
     }
+    if (!fs.existsSync('./public/fullJSON')){
+        fs.mkdirSync('public/fullJSON')
+    }
     initServer(config);
     cron.schedule(config.scraper.cron , async ()=>{
         console.log(chalk.grey('[app] Cron job task run'));

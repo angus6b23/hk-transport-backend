@@ -62,6 +62,9 @@ const writeChunked = async (array: any[], prefix: string) => {
     }
 }
 
+const writeFullFile = async (type: TransportType, data:any) => {
+    await fs.promises.writeFile(`./public/fullJSON/${type}.json`, JSON.stringify(data), 'utf-8');
+}
 const createPromise = async (type: TransportType, chunkSize: number) => {
     return new Promise(async (resolve, reject) => {
         let data;
@@ -89,6 +92,7 @@ const createPromise = async (type: TransportType, chunkSize: number) => {
                     reject
             }
             if (data && data.length > 1) {
+                await writeFullFile(type, data);
                 const chunked = chunk(data, chunkSize);
                 await writeChunked(chunked, type);
                 console.info(chalk.blue(`[scrape] Finish creating json for ${type}`))
