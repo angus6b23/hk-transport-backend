@@ -108,3 +108,8 @@ cache/
 public/
 public/chunked/*
 public/*.json
+public/fullJSON/*
+
+#dev js
+debug.ts
+dev.ts

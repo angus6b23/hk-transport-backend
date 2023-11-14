@@ -6,6 +6,7 @@ import cron from 'node-cron'
 
 import { fetchAll } from './scrape/controller'
 import initServer from "./express-modules/create-server";
+import fetchRthkNews from './scrape/rthk-news';
 
 let config: Config
 
@@ -19,10 +20,16 @@ fs.promises.readFile('./config.yaml', 'utf-8').then(async(data) => {
         console.info(chalk.yellow(`[app] Hashes not found, rebuilding chunks and hashses`))
         await fetchAll(config)
     }
+    if (!fs.existsSync('./public/fullJSON')){
+        fs.mkdirSync('public/fullJSON')
+    }
     initServer(config);
     cron.schedule(config.scraper.cron , async ()=>{
         console.log(chalk.grey('[app] Cron job task run'));
         await fetchAll(config);
+    })
+    cron.schedule("*/5 * * * *", async () => {
+        await fetchRthkNews()
     })
 }).catch(err => {
     console.error(chalk.red(`[app] Error while loading config: ${err}`))
