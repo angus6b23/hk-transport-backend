@@ -42,4 +42,14 @@ router.get('/lightRailEta', async(req, res) =>{
     }
 })
 
+router.get('/get-news', async(req, res) => {
+    try{
+        const news = await fs.promises.readFile('./public/rthk-news.json', 'utf-8')
+        res.status(200).json(JSON.parse(news))
+    } catch(err){
+        res.status(500).send('Server Error - currently no news fetched')
+    }
+
+})
+
 export default router;
