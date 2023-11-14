@@ -105,5 +105,6 @@ dist
 # dev folder includes JSON for development
 dev/
 cache/
+public/
 public/chunked/*
 public/*.json
