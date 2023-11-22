@@ -16,20 +16,20 @@ fs.promises.readFile('./config.yaml', 'utf-8').then(async(data) => {
     // Create folder if hashes not found
     if (!fs.existsSync('./public/hash.json')){
         fs.mkdirSync('public');
-        fs.mkdirSync('public/chunked')
+        fs.mkdirSync('public/chunked');
+        if (!fs.existsSync('./public/fullJSON')){
+            fs.mkdirSync('public/fullJSON')
+        }
         console.info(chalk.yellow(`[app] Hashes not found, rebuilding chunks and hashses`))
         await fetchAll(config)
-    }
-    if (!fs.existsSync('./public/fullJSON')){
-        fs.mkdirSync('public/fullJSON')
     }
     initServer(config);
     cron.schedule(config.scraper.cron , async ()=>{
         console.log(chalk.grey('[app] Cron job task run'));
         await fetchAll(config);
     })
-    cron.schedule("*/5 * * * *", async () => {
-        await fetchRthkNews()
+    cron.schedule(config.scraper.newsCron, async () => {
+await fetchRthkNews()
     })
 }).catch(err => {
     console.error(chalk.red(`[app] Error while loading config: ${err}`))

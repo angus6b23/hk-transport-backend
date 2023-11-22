@@ -17,6 +17,7 @@ export interface Config {
         cron: string;
         forceRebuild: number;
         chunkSize: number;
+        newsCron: string;
     }
 }
 

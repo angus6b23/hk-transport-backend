@@ -14,3 +14,5 @@ scraper:
   cron: '5 3 * * *'
   # This app will divide large json files into small chunks. This sets the number of entries per json file sent to frontend
   chunkSize: 50
+  # The cron syntax for fetching road news from rthk
+  newsCron: '*/5 * * * *'
