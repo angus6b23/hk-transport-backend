@@ -1,9 +1,11 @@
 import axios, { AxiosResponse } from 'axios'
 import { Route, Stop } from '../typescript/interfaces'
-import { setupCache } from 'axios-cache-interceptor'
+import { setupCache } from 'axios-cache-interceptor/dev'
 import fs from 'fs'
 
-const axiosCache = setupCache(axios)
+const axiosCache = setupCache(axios, {
+    debug: console.log
+})
 const convertTime = (string: string) => {
     if (string === 'Arriving' || string === '-') {
         return 0
@@ -34,12 +36,22 @@ export default async function fetchLightRailETA(
                     `https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${id}`,
                     {
                         cache: {
-                            ttl: 20,
+                            ttl: 1000 * 20,
                         },
                     }
                 )
             )
+        const startTime = performance.now()
             const resList = await Promise.all(promiseList)
+            const cacheCount = resList.reduce((acc, cur) => {
+                if (cur.cached){
+                    return acc + 1
+                } else {
+                    return acc
+                }
+            }, 0)
+            const endTime = performance.now()
+            console.log(`Time spent: ${endTime - startTime}, cahced: ${cacheCount}`)
             let resData = resList.map((res: AxiosResponse) => {
                 // Grab Station id for identification
                 const stationId = res.config.url?.replace(
