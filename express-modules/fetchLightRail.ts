@@ -34,7 +34,7 @@ export default async function fetchLightRailETA(
                     `https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${id}`,
                     {
                         cache: {
-                            ttl: 20,
+                            ttl: 1000* 20,
                         },
                     }
                 )
