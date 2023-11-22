@@ -1,16 +1,18 @@
 server:
-  # The port which the backend is listening at
-  port: 5000
-  # See https://www.npmjs.com/package/cors for options
-  cors: 
-    origin: '*'
-    optionsSuccessStatus: 200
-  # The base path for the routes
-  basePath: '/'
+    # The port which the backend is listening at
+    port: 5000
+    # See https://www.npmjs.com/package/cors for options
+    cors:
+        origin: '*'
+        optionsSuccessStatus: 200
+    # The base path for the routes
+    basePath: '/'
 
 scraper:
-  # The cron syntax for fetching data from api
-  # See https://www.npmjs.com/package/node-cron and https://crontab.guru/ for more info
-  cron: '5 3 * * *'
-  # This app will divide large json files into small chunks. This sets the number of entries per json file sent to frontend
-  chunkSize: 50
+    # The cron syntax for fetching data from api
+    # See https://www.npmjs.com/package/node-cron and https://crontab.guru/ for more info
+    cron: '5 3 * * *'
+    # This app will divide large json files into small chunks. This sets the number of entries per json file sent to frontend
+    chunkSize: 50
+    # The cron syntax for fetching road news from rthk
+    newsCron: '*/5 * * * *'

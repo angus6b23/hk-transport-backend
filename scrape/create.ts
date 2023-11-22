@@ -1,33 +1,62 @@
-import { BusRoute, FerryRoute, MTRRoute, MinibusRoute, Route, Stop, TramRoute, MTRStop } from '../typescript/interfaces';
-import { TransportType } from '../typescript/types';
+import {
+    BusRoute,
+    FerryRoute,
+    MTRRoute,
+    MinibusRoute,
+    Route,
+    Stop,
+    TramRoute,
+    MTRStop,
+} from '../typescript/interfaces'
+import { TransportType } from '../typescript/types'
 
 const createStop = <T>(item: any): T => {
-    let { stopNameC: nameTC, stopNameE: nameEN, stopId: id, stopSeq: seq } = item.properties;
-    let { coordinates: coord } = item.geometry;
+    let {
+        stopNameC: nameTC,
+        stopNameE: nameEN,
+        stopId: id,
+        stopSeq: seq,
+    } = item.properties
+    let { coordinates: coord } = item.geometry
     let newStop: Stop = {
         nameTC: nameTC.replace('<br>', ''),
         nameEN: nameEN.replace('<br>', ''),
         stopId: id,
         seq: seq,
         coord: coord,
-        etas: []
-    };
+        etas: [],
+    }
     return newStop as T
 }
 
 const createRoute = <T>(item: any, type: TransportType): T => {
-    let { companyCode, routeNameE: routeNo, routeId, serviceMode, specialType, hyperlinkE: infoLinkEN, hyperlinkC: infoLinkTC, fullFare, routeSeq: direction, journeyTime, district, routeNameC: routeNameTC } = item.properties; //Deconstruct item;
-    let originEN, originTC, destEN, destTC;
-    if (item.properties.routeSeq == 1) { //Direction 1 = Inbound
-        destTC = item.properties.locEndNameC;
-        destEN = item.properties.locEndNameE;
-        originTC = item.properties.locStartNameC;
-        originEN = item.properties.locStartNameE;
-    } else { //Direction 2 = Outbound
-        destTC = item.properties.locStartNameC;
-        destEN = item.properties.locStartNameE;
-        originTC = item.properties.locEndNameC;
-        originEN = item.properties.locEndNameE;
+    let {
+        companyCode,
+        routeNameE: routeNo,
+        routeId,
+        serviceMode,
+        specialType,
+        hyperlinkE: infoLinkEN,
+        hyperlinkC: infoLinkTC,
+        fullFare,
+        routeSeq: direction,
+        journeyTime,
+        district,
+        routeNameC: routeNameTC,
+    } = item.properties //Deconstruct item;
+    let originEN, originTC, destEN, destTC
+    if (item.properties.routeSeq == 1) {
+        //Direction 1 = Inbound
+        destTC = item.properties.locEndNameC
+        destEN = item.properties.locEndNameE
+        originTC = item.properties.locStartNameC
+        originEN = item.properties.locStartNameE
+    } else {
+        //Direction 2 = Outbound
+        destTC = item.properties.locStartNameC
+        destEN = item.properties.locStartNameE
+        originTC = item.properties.locEndNameC
+        originEN = item.properties.locEndNameE
     }
     let newRoute: Route = {
         type: type,
@@ -47,33 +76,33 @@ const createRoute = <T>(item: any, type: TransportType): T => {
         starred: false,
     }
     if (type == 'bus') {
-        const company = companyCode.split('+');
+        const company = companyCode.split('+')
         let newBusRoute: BusRoute = {
             ...newRoute,
             company: company,
-            stops: []
+            stops: [],
         }
-        return newBusRoute as T;
+        return newBusRoute as T
     }
-    if (type == 'minibus'){
+    if (type == 'minibus') {
         let newMinibusRoute: MinibusRoute = {
             ...newRoute,
             district: district,
-            stops: []
+            stops: [],
         }
-        return newMinibusRoute as T;
+        return newMinibusRoute as T
     }
-    if (type == 'ferry'){
+    if (type == 'ferry') {
         let newFerryRoute: FerryRoute = {
             ...newRoute,
             district: district,
             routeNameEN: routeNo,
             routeNameTC: routeNameTC,
-            stops: []
+            stops: [],
         }
-        return newFerryRoute as T;
+        return newFerryRoute as T
     }
-    if (type == 'tram'){
+    if (type == 'tram') {
         let newTramRoute: TramRoute = {
             ...newRoute,
             routeNameEN: routeNo,
@@ -82,9 +111,9 @@ const createRoute = <T>(item: any, type: TransportType): T => {
             originEN: originEN.replace(/\(\$2.*\)$/, ''),
             destTC: destTC.replace(/\(持有.*\)$/, ''),
             destEN: destEN.replace(/\(\$2.*\)$/, ''),
-            stops: []
+            stops: [],
         }
-        return newTramRoute as T;
+        return newTramRoute as T
     }
     return newRoute as T
 }
@@ -96,8 +125,17 @@ const createMTRRoute = (item: any): MTRRoute => {
         routeNameTC: getMTRRouteNameTC(item['Line Code']),
         routeNameEN: getMTRRouteNameEN(item['Line Code']),
         color: getMTRColor(item['Line Code']),
-        direction: (item['Direction'] == 'DT') ? 1 : (item['Direction'] == 'UT') ? 2 : item['Direction'].includes('DT') ? 3 : item['Direction'].includes('UT') ? 4 : 5,
-        stops: []
+        direction:
+            item['Direction'] == 'DT'
+                ? 1
+                : item['Direction'] == 'UT'
+                  ? 2
+                  : item['Direction'].includes('DT')
+                    ? 3
+                    : item['Direction'].includes('UT')
+                      ? 4
+                      : 5,
+        stops: [],
     }
     return newMTRRoute
 }
@@ -109,24 +147,24 @@ const createLRRoute = (item: any): MTRRoute => {
         routeNameTC: item['Line Code'],
         routeNameEN: item['Line Code'],
         direction: item['Direction'],
-        stops: []
+        stops: [],
     }
     return newLRRoute
 }
 
 const createMTRStop = (item: any): MTRStop => {
     return {
-        stopId: (item['Station ID']) ? item['Station ID']: item['Stop ID'],
+        stopId: item['Station ID'] ? item['Station ID'] : item['Stop ID'],
         seq: Number(item['Sequence']),
         nameTC: item['Chinese Name'],
         nameEN: item['English Name'],
         code: item['Station Code'],
-        etas: []
+        etas: [],
     }
 }
 
 const getMTRRouteNameTC = (code: string): string => {
-    switch(code){
+    switch (code) {
         case 'AEL':
             return '機場快綫'
         case 'DRL':
@@ -152,7 +190,7 @@ const getMTRRouteNameTC = (code: string): string => {
     }
 }
 const getMTRRouteNameEN = (code: string): string => {
-    switch(code){
+    switch (code) {
         case 'AEL':
             return 'Airport Express'
         case 'DRL':
@@ -204,4 +242,4 @@ const getMTRColor = (code: string): string => {
             return 'ffffff'
     }
 }
-export {createStop, createRoute, createMTRRoute, createMTRStop, createLRRoute}
+export { createStop, createRoute, createMTRRoute, createMTRStop, createLRRoute }
