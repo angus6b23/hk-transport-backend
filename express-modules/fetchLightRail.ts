@@ -62,6 +62,10 @@ export default async function fetchLightRailETA(
                     'https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=',
                     ''
                 )
+                // Throw error if platform_list is undefined
+                if (res.data.platform_list === undefined){
+                    throw new Error('platform_list is undefined')
+                }
                 // Get route_list from platform_list and then flatten the array
                 const resData = res.data.platform_list
                     .map((item: any) => item.route_list)
@@ -81,7 +85,7 @@ export default async function fetchLightRailETA(
             throw new Error('Route Number not found')
         }
     } catch (err) {
-        console.error(err)
+        // console.error(err)
         return []
     }
 }
