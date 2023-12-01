@@ -51,32 +51,32 @@ export default async function fetchLightRailETA(
             const { destEN, stops } = targetRoute[0]
             const stopIdList = stops.map((stop: Stop) => stop.stopId)
             const promiseList = stopIdList.map((id: string) =>
-                                               axiosCache(
-                                                   `https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${id}`
+                axiosCache(
+                    `https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${id}`
+                )
             )
-                                              )
-                                              const resList = await Promise.all(promiseList)
-                                              let resData = resList.map((res: AxiosResponse) => {
-                                                  // Grab Station id for identification
-                                                  const stationId = res.config.url?.replace(
-                                                      'https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=',
-                                                      ''
-                                                  )
-                                                  // Get route_list from platform_list and then flatten the array
-                                                  const resData = res.data.platform_list
-                                                  .map((item: any) => item.route_list)
-                                                  .flat()
-                                                  // Filter every route to find target Data, then map relevant data into array
-                                                  const targetData = resData
-                                                  .filter(
-                                                      (item: any) =>
-                                                          item['route_no'] === routeId &&
-                                                          item['dest_en'] === destEN
-                                                  )
-                                                  .map((item: any) => convertTime(item.time_en))
-                                                  return { stationId: stationId, etas: targetData }
-                                              })
-                                              return resData
+            const resList = await Promise.all(promiseList)
+            let resData = resList.map((res: AxiosResponse) => {
+                // Grab Station id for identification
+                const stationId = res.config.url?.replace(
+                    'https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=',
+                    ''
+                )
+                // Get route_list from platform_list and then flatten the array
+                const resData = res.data.platform_list
+                    .map((item: any) => item.route_list)
+                    .flat()
+                // Filter every route to find target Data, then map relevant data into array
+                const targetData = resData
+                    .filter(
+                        (item: any) =>
+                            item['route_no'] === routeId &&
+                            item['dest_en'] === destEN
+                    )
+                    .map((item: any) => convertTime(item.time_en))
+                return { stationId: stationId, etas: targetData }
+            })
+            return resData
         } else {
             throw new Error('Route Number not found')
         }
