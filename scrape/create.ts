@@ -152,7 +152,10 @@ const createLRRoute = (item: any): MTRRoute => {
     return newLRRoute
 }
 
-const createMTRStop = (item: any): MTRStop => {
+const createMTRStop = (item: any, coordList: {name: string, coord: number[]}[] | undefined = undefined): MTRStop => {
+    if (coordList !== undefined){
+        
+    }
     return {
         stopId: item['Station ID'] ? item['Station ID'] : item['Stop ID'],
         seq: Number(item['Sequence']),
