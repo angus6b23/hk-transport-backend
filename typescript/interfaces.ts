@@ -109,3 +109,32 @@ export interface Timetable {
         freq: string | number
     }[]
 }
+
+export interface GeocomData{
+    GEONAMEID: string
+    ENGLISHNAME: string
+    CHINESENAME: string
+    CLASS: string
+    TYPE: string
+    SUBCAT: string
+    EASTING: string
+    NORTHING: string
+    SOURCE: string
+    E_FLOOR: string
+    C_FLOOR: string
+    E_SITENAME: string
+    C_SITENAME: string
+    E_AREA: string
+    C_AREA: string
+    E_DISTRICT: string
+    C_DISTRICT: string
+    E_REGION: string
+    C_REGION: string
+    E_ADDRESS: string
+    C_ADDRESS: string
+    TEL_NO: string
+    FAX_NO: string
+    WEB_SITE: string
+    REV_DATE: string
+
+}
