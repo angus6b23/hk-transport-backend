@@ -119,6 +119,10 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
             (bus) => bus.company.includes('KMB') || bus.company.includes('LWB')
         )
         for (let kmbBus of kmbBuses) {
+            // Temporary work around for KMB 87S
+            if (kmbBus.routeId === 8504){
+                kmbBus.direction = 2
+            }
             const timetableResponse = await axios(
                 `https://search.kmb.hk/KMBWebSite/Function/FunctionRequest.ashx?action=getschedule&route=${kmbBus.routeNo}&bound=${kmbBus.direction}`
             )
