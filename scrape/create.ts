@@ -152,10 +152,17 @@ const createLRRoute = (item: any): MTRRoute => {
     return newLRRoute
 }
 
-const createMTRStop = (item: any, coordList: {name: string, coordinates: number[]}[] | undefined = undefined): MTRStop => {
+const createMTRStop = (
+    item: any,
+    coordList: { name: string; coordinates: number[] }[] | undefined = undefined
+): MTRStop => {
     let targetCoords: undefined | number[]
-    if (coordList !== undefined){
-         targetCoords = coordList.find(listItem => listItem.name.toLowerCase() === item['English Name'].toLowerCase())?.coordinates ;
+    if (coordList !== undefined) {
+        targetCoords = coordList.find(
+            (listItem) =>
+                listItem.name.toLowerCase() ===
+                item['English Name'].toLowerCase()
+        )?.coordinates
     }
     return {
         stopId: item['Station ID'] ? item['Station ID'] : item['Stop ID'],
@@ -164,7 +171,7 @@ const createMTRStop = (item: any, coordList: {name: string, coordinates: number[
         nameEN: item['English Name'],
         code: item['Station Code'],
         etas: [],
-        coord: targetCoords
+        coord: targetCoords,
     }
 }
 

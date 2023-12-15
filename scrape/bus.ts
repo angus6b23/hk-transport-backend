@@ -29,7 +29,7 @@ const fetchBuses = async () => {
                 item.properties.companyCode == 'LRTFeeder' ||
                 item.properties.routeNameC.indexOf('K') == 0
             ) {
-                //NLB and LRTFeeder buses will be implemented later
+                //NLB and LRTFeeder buses will be skipped and implemented later
                 return buses
             }
             const newStop = createStop<BusStop>(item)
@@ -62,7 +62,7 @@ const fetchBuses = async () => {
         console.error(chalk.red(`[bus] Error while scraping bus: ${err}`))
     }
 }
-const fixKMBEn = (string: string): string => {
+const fixKMBEn = (string: string): string => { // KWAI SHING(CENTRAL)(CIRCULAR) => Kwai Shing (Central)
     let newString = string.toLowerCase()
     let capital: boolean = true
     for (let i = 0; i < string.length; i++) {
@@ -120,7 +120,7 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         )
         for (let kmbBus of kmbBuses) {
             // Temporary work around for KMB 87S
-            if (kmbBus.routeId === 8504){
+            if (kmbBus.routeId === 8504) {
                 kmbBus.direction = 2
             }
             const timetableResponse = await axios(
@@ -138,23 +138,28 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                     )
                     if (
                         checkIndex === -1 &&
-                        slot.BoundText1 &&
-                        slot.BoundTime1
+                        slot[`BoundText${kmbBus.direction}`] &&
+                        slot[`BoundTime${kmbBus.direction}`]
                     ) {
                         // Only add to timetable if all fields are satisfied
                         newTimeTable.push({
                             title: slot.DayType.replaceAll(' ', ''),
                             details: [
                                 {
-                                    period: slot.BoundText1,
-                                    freq: slot.BoundTime1,
+                                    period: slot[
+                                        `BoundText${kmbBus.direction}`
+                                    ],
+                                    freq: slot[`BoundTime${kmbBus.direction}`],
                                 },
                             ],
                         })
-                    } else if (slot.BoundText1 && slot.BoundTime1) {
+                    } else if (
+                        slot[`BoundText${kmbBus.direction}`] &&
+                        slot[`BoundTime${kmbBus.direction}`]
+                    ) {
                         newTimeTable[checkIndex].details.push({
-                            period: slot.BoundText1,
-                            freq: slot.BoundTime1,
+                            period: slot[`BoundText${kmbBus.direction}`],
+                            freq: slot[`BoundTime${kmbBus.direction}`],
                         })
                     }
                 }

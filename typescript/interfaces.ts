@@ -110,7 +110,7 @@ export interface Timetable {
     }[]
 }
 
-export interface GeocomData{
+export interface GeocomData {
     GEONAMEID: string
     ENGLISHNAME: string
     CHINESENAME: string
@@ -136,5 +136,4 @@ export interface GeocomData{
     FAX_NO: string
     WEB_SITE: string
     REV_DATE: string
-
 }

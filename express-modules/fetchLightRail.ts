@@ -63,7 +63,7 @@ export default async function fetchLightRailETA(
                     ''
                 )
                 // Throw error if platform_list is undefined
-                if (res.data.platform_list === undefined){
+                if (res.data.platform_list === undefined) {
                     throw new Error('platform_list is undefined')
                 }
                 // Get route_list from platform_list and then flatten the array
