@@ -118,11 +118,26 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         const kmbBuses = buses.filter(
             (bus) => bus.company.includes('KMB') || bus.company.includes('LWB')
         )
+        // Try to find buses with exceptions: Same route No with same direction, but different routeId;
+        const exceptionRoutes: BusRoute[][] = []
+        // Find all exception routes through looping all kmb buses, then filter out target routes
+        kmbBuses.forEach((route: BusRoute) => {
+            const unhandled = kmbBuses.filter((element: BusRoute) => element.routeNo === route.routeNo && element.direction === route.direction && route.routeId !== element.routeId && route.specialType === element.specialType && route.company.length === 1)
+            if (unhandled.length > 0 ){
+                exceptionRoutes.push([route, ...unhandled])
+            }
+        });
+        exceptionRoutes.forEach(pair => { // The pair with larger routeId always have a direction of 2
+            pair.sort((a: BusRoute, b: BusRoute) => Number(a.routeId) - Number(b.routeId));
+            pair[0].direction = 1
+            pair[1].direction = 2
+        })
+
         for (let kmbBus of kmbBuses) {
             // Temporary work around for KMB 87S
-            if (kmbBus.routeId === 8504) {
-                kmbBus.direction = 2
-            }
+            // if (kmbBus.routeId === 8504) {
+            //     kmbBus.direction = 2
+            // }
             const timetableResponse = await axios(
                 `https://search.kmb.hk/KMBWebSite/Function/FunctionRequest.ashx?action=getschedule&route=${kmbBus.routeNo}&bound=${kmbBus.direction}`
             )
@@ -138,8 +153,10 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                     )
                     if (
                         checkIndex === -1 &&
-                        slot[`BoundText${kmbBus.direction}`] &&
-                        slot[`BoundTime${kmbBus.direction}`]
+                        (
+                            slot[`BoundText${kmbBus.direction}`] ||
+                            slot[`BoundTime${kmbBus.direction}`]
+                        )
                     ) {
                         // Only add to timetable if all fields are satisfied
                         newTimeTable.push({
@@ -154,7 +171,7 @@ const implementKMB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
                             ],
                         })
                     } else if (
-                        slot[`BoundText${kmbBus.direction}`] &&
+                        slot[`BoundText${kmbBus.direction}`] ||
                         slot[`BoundTime${kmbBus.direction}`]
                     ) {
                         newTimeTable[checkIndex].details.push({
@@ -251,7 +268,7 @@ const implementCTB = async (buses: BusRoute[]): Promise<BusRoute[]> => {
         // Grab all Mixed bus data
         // Even KMB and CTB / NWFB operate the same route, the direction use different internally
         console.info(
-            chalk.blue(`[bus] Now fetching buses with several companies`)
+            chalk.blue(`[bus] Now fetching buses operated by multiple companies`)
         )
         const mixedBusIdReq = mixedBuses.map((bus) => {
             const company = bus.company.includes('CTB')
